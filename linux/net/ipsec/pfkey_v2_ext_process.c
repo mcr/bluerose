@@ -701,7 +701,6 @@ errlab:
 }
 
 
-#ifdef CONFIG_IPSEC_NAT_TRAVERSAL
 int
 pfkey_x_nat_t_type_process(struct sadb_ext *pfkey_ext, struct pfkey_extracted_data* extr)
 {
@@ -787,7 +786,6 @@ pfkey_x_nat_t_port_process(struct sadb_ext *pfkey_ext, struct pfkey_extracted_da
 errlab:
 	return error;
 }
-#endif
 
 int
 pfkey_x_debug_process(struct sadb_ext *pfkey_ext, struct pfkey_extracted_data* extr)

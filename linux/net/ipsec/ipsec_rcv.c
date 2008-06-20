@@ -362,7 +362,6 @@ ipsec_rcv_decap_once(struct ipsec_rcv_state *irs
 
 
 
-#ifdef CONFIG_IPSEC_NAT_TRAVERSAL
                 if (proto == IPPROTO_ESP) {
                         KLIPS_PRINT(debug_rcv,
                                 "klips_debug:ipsec_rcv: "
@@ -381,7 +380,6 @@ ipsec_rcv_decap_once(struct ipsec_rcv_state *irs
                                 return IPSEC_RCV_FAILEDINBOUND;
                         }
                 }
-#endif		 
 	}
 
 	/* okay, SA checks out, so free any previous SA, and record a new one*/

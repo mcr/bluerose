@@ -343,7 +343,6 @@ ipsec_spi_get_info(char *buffer,
 			}
 #endif /* CONFIG_KLIPS_IPCOMP */
 
-#ifdef CONFIG_IPSEC_NAT_TRAVERSAL
 			{
 				char *natttype_name;
 
@@ -372,9 +371,6 @@ ipsec_spi_get_info(char *buffer,
 				len += ipsec_snprintf(buffer + len,length-len, " natdport=%d",
 					       sa_p->ips_natt_dport);
 			}
-#else
-			len += ipsec_snprintf(buffer + len, length-len, " natencap=na");
-#endif /* CONFIG_IPSEC_NAT_TRAVERSAL */
 				
 			len += ipsec_snprintf(buffer + len,length-len, " refcount=%d",
 				       atomic_read(&sa_p->ips_refcount));
