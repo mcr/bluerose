@@ -1,0 +1,5 @@
+# vendor/distro things go here.
+
+install::
+	echo 'Bluerose ' >${LIBEXECDIR}/vendor
+

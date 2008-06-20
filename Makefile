@@ -37,6 +37,7 @@ def:
 	@echo
 
 include ${OPENSWANSRCDIR}/Makefile.top
+-include ${OPENSWANSRCDIR}/Makefile.vendor
 
 # kernel details
 # what variant of our patches should we use, and where is it
@@ -589,8 +590,7 @@ buildready:
 	cd doc ; $(MAKE) -s
 
 rpm:
-	@echo please cd packaging/redhat and
-	@echo run "${MAKE} RH_KERNELSRC=/some/path/to/kernel/src rpm"
+	@echo please run rpmbuild -bs packaging/fedora/openswan.spec
 
 ipkg_strip:
 	@echo "Minimizing size for ipkg binaries..."
