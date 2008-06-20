@@ -292,38 +292,6 @@ then
 	@MODPROBE@ ipsec 2> /dev/null
 fi
 
-if test ! -f $ipsecversion && test ! -f $netkey && @MODPROBE@ -q af_key
-then
-	@MODPROBE@ -v af_key
-fi
-
-if test -f $netkey
-then
-	if test -f $modules
-	then
-		@MODPROBE@ -qv ah4
-		@MODPROBE@ -qv esp4
-		@MODPROBE@ -qv ipcomp
-		#  xfrm4_tunnel is needed by ipip and ipcomp
-		@MODPROBE@ -qv xfrm4_tunnel
-		# xfrm_user contains netlink support for IPsec 
-		@MODPROBE@ -qv xfrm_user
-
-		echo Trying hardware random, this may fail, which is okay.
-		@MODPROBE@ -q hw_random 2>/dev/null
-
-		# padlock must load before aes module
-		echo Trying VIA padlock driver, this may fail, which is okay.
-		@MODPROBE@ -q padlock 2>/dev/null
-
-		# load the most common ciphers/algo's
-		@MODPROBE@ -qv sha1
-		@MODPROBE@ -qv md5
-		@MODPROBE@ -qv des
-		@MODPROBE@ -qv aes
-	fi
-fi
-
 if test ! -f $ipsecversion
 then
 	echo "kernel appears to lack IPsec support (neither CONFIG_KLIPS or CONFIG_NET_KEY are set)"
