@@ -255,7 +255,7 @@ retransmit_v1_msg(struct state *st)
 	    }
 
 	    if((try % 3)==0
-	       && (c->policy & POLICY_IKEV2_ALLOW)!=0) {
+	       && (c->policy & POLICY_IKEV2_PROPOSE)!=0) {
 		/* so, let's retry with IKEv2, alternating every three messages */
 		if(c->failed_ikev2) {
 		    c->failed_ikev2 = FALSE;
