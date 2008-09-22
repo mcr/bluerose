@@ -181,15 +181,19 @@
 #define ipsec_register_sysctl_table(a,b) register_sysctl_table(a,b)
 #endif
  
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
-/* need to include ip.h early, no longer pick it up in skbuff.h */
-#include <linux/ip.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22) 
 #  define HAVE_KERNEL_TSTAMP
 #  define HAVE_KMEM_CACHE_MACRO
-/* type of sock.sk_stamp changed from timeval to ktime  */
 #  define grab_socket_timeval(tv, sock)  { (tv) = ktime_to_timeval((sock).sk_stamp); }
 #else
 #  define grab_socket_timeval(tv, sock)  { (tv) = (sock).sk_stamp; }
+#endif
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22) || (RHEL_RELEASE_CODE >= RHEL_RELEASE_VERSION(5,2))
+/* need to include ip.h early, no longer pick it up in skbuff.h */
+#include <linux/ip.h>
+/* type of sock.sk_stamp changed from timeval to ktime  */
+#else
 /* internals of struct skbuff changed */
 #  define        HAVE_DEV_NEXT
 #  define ip_hdr(skb)  ((skb)->nh.iph)
