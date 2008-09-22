@@ -1,5 +1,7 @@
 # vendor/distro things go here.
+VENDOR=-bluerose
 
 install::
+	mkdir -p ${LIBEXECDIR}
 	echo 'Bluerose ' >${LIBEXECDIR}/vendor
 

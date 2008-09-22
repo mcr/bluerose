@@ -1,1 +1,1 @@
-IPSECBASEVERSION=bluerose-1.git
+IPSECBASEVERSION=$(shell date +%Y%V).git

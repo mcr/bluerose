@@ -1,9 +1,6 @@
 Summary: Openswan IPSEC implementation
 Name: openswan
-Version: IPSECBASEVERSION
-# Build KLIPS kernel module?
-%{!?buildklips: %{expand: %%define buildklips 0}}
-%{!?buildxen: %{expand: %%define buildxen 0}}
+Version: 200833
 
 # The default kernel version to build for is the latest of
 # the installed binary kernel
@@ -38,30 +35,26 @@ through the untrusted net is encrypted by the ipsec gateway machine and
 decrypted by the gateway at the other end of the tunnel.  The resulting
 tunnel is a virtual private network or VPN.
 
-This package contains the daemons and userland tools for setting up
-Openswan on a freeswan enabled kernel. It optionally also builds the
-Openswan KLIPS IPsec stack that is an alternative for the NETKEY/XFRM
-IPsec stack that exists in the default Linux kernel.
+This package contains Bluerose Openswan, which is a variant maintained
+by Michael Richardson <mcr@sandelman.ca>.  No version information is provided
+with this package other than a year and week number. For a supported product
+contact sales@xelerance.com.
 
-%if %{buildklips}
+This package contains the daemons and userland tools for setting up
+Openswan on a freeswan enabled kernel. It also builds the
+Openswan KLIPS IPsec stack that is well tested.
+
 %package klips
 Summary: Openswan kernel module
 Group:  System Environment/Kernel
 Release: %{krelver}_%{ourrelease}
 Requires: kernel = %{kversion}, %{name}-%{version}
-%endif
 
-%if %{buildklips}
 %description klips
 This package contains only the ipsec module for the RedHat/Fedora series of
 kernels.
-%endif
 
 %prep
-%setup -q -n openswan-%{srcpkgver}
-sed -i 's/-Werror/#-Werror/' lib/libdns/Makefile
-sed -i 's/-Werror/#-Werror/' lib/libisc/Makefile
-sed -i 's/-Werror/#-Werror/' lib/liblwres/Makefile
 
 %build
 %{__make} \
@@ -72,7 +65,6 @@ sed -i 's/-Werror/#-Werror/' lib/liblwres/Makefile
   INC_RCDEFAULT=%{_initrddir} \
   programs
 FS=$(pwd)
-%if %{buildklips}
 mkdir -p BUILD.%{_target_cpu}
 
 cd packaging/redhat
@@ -81,15 +73,10 @@ cd packaging/redhat
     OPENSWANSRCDIR=$FS \
     KLIPSCOMPILE="%{optflags}" \
     KERNELSRC=/lib/modules/%{kversion}/build \
-%if %{buildxen}
-    ARCH=xen \
-%else
     ARCH=%{_arch} \
-%endif
     MODULE_DEF_INCLUDE=$FS/packaging/redhat/config-%{_target_cpu}.h \
     MODULE_EXTRA_INCLUDE=$FS/packaging/redhat/extra_%{krelver}.h \
     include module
-%endif
 
 %install
 rm -rf ${RPM_BUILD_ROOT}
@@ -99,6 +86,7 @@ rm -rf ${RPM_BUILD_ROOT}
   FINALLIBDIR=%{_libdir}/ipsec \
   MANTREE=%{buildroot}%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
+  RPMBUILD=true \
   install
 FS=$(pwd)
 rm -rf %{buildroot}/usr/share/doc/openswan
