@@ -1776,7 +1776,7 @@ ipsec_rcv_state_cache_init (void)
 
         spin_lock_init(&irs_cache_lock);
 #ifdef HAVE_KMEM_CACHE_MACRO
-        irs_cache_allocator = KMEM_CACHE(ipsec_irs,0);
+        irs_cache_allocator = KMEM_CACHE(ipsec_rcv_state, 0);
 #else
         irs_cache_allocator = kmem_cache_create ("ipsec_irs",
                 sizeof (struct ipsec_rcv_state), 0,

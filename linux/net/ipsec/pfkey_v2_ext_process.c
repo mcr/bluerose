@@ -43,7 +43,7 @@
 
 #include <openswan.h>
 
-#include <crypto/des.h>
+#include <crypto/klips-des.h>
 
 #ifdef SPINLOCK
 # ifdef SPINLOCK_23

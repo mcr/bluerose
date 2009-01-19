@@ -222,6 +222,11 @@
 #  define HAVE_UDP_ENCAP_CONVERT 1
 #endif
 
+/* not sure when network name spaces got introduced, but it is in 2.6.26 */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26)
+#  define HAVE_NETWORK_NAMESPACE 1
+#endif
+
 #ifdef NET_21
 #  include <linux/in6.h>
 #else

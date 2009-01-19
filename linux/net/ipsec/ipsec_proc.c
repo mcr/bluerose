@@ -605,6 +605,8 @@ ipsec_version_get_info(char *buffer,
 
 #ifdef CONFIG_IPSEC_NAT_TRAVERSAL
 unsigned int natt_available = 1;
+#elif defined(HAVE_UDP_ENCAP_CONVERT)
+unsigned int natt_available = 2;
 #else
 unsigned int natt_available = 0;
 #endif
@@ -625,14 +627,7 @@ ipsec_natt_get_info(char *buffer,
 	off_t begin = 0;
 
 	len += ipsec_snprintf(buffer + len,
-			      length-len, "%d\n",
-#ifdef CONFIG_IPSEC_NAT_TRAVERSAL
-			      1
-#else
-			      0
-#endif
-		);
-
+			      length-len, "%d\n", natt_available);
 	*start = buffer + (offset - begin);	/* Start of wanted data */
 	len -= (offset - begin);			/* Start slop */
 	if (len > length)
@@ -864,6 +859,7 @@ ipsec_proc_init()
 #ifdef IPSEC_PROC_SUBDIRS
 	struct proc_dir_entry *item;
 #endif
+	struct proc_dir_entry *my_proc_net;
 
 	/*
 	 * just complain because pluto won't run without /proc!
@@ -904,7 +900,16 @@ ipsec_proc_init()
 	memset(&ipsec_ipv4_birth_packet, 0, sizeof(struct ipsec_birth_reply));
 	memset(&ipsec_ipv6_birth_packet, 0, sizeof(struct ipsec_birth_reply));
 
-	proc_net_ipsec_dir = proc_mkdir("ipsec", proc_net);
+#if defined(HAVE_NETWORK_NAMESPACE)
+	{
+		struct net *net = &init_net;
+		proc_net_ipsec_dir = proc_net_mkdir(net, "ipsec", net->proc_net);
+		my_proc_net = net->proc_net;
+	}
+#else
+	my_proc_net = proc_net;
+	proc_net_ipsec_dir = proc_mkdir("ipsec", my_proc_net);
+#endif
 	if(proc_net_ipsec_dir == NULL) {
 		/* no point in continuing */
 		return 1;
@@ -937,12 +942,12 @@ ipsec_proc_init()
 	}
 	
 	/* now create some symlinks to provide compatibility */
-	proc_symlink("ipsec_eroute", proc_net, "ipsec/eroute/all");
-	proc_symlink("ipsec_spi",    proc_net, "ipsec/spi/all");
-	proc_symlink("ipsec_spigrp", proc_net, "ipsec/spigrp/all");
-	proc_symlink("ipsec_tncfg",  proc_net, "ipsec/tncfg");
-	proc_symlink("ipsec_version",proc_net, "ipsec/version");
-	proc_symlink("ipsec_klipsdebug",proc_net,"ipsec/klipsdebug");
+	proc_symlink("ipsec_eroute",    my_proc_net, "ipsec/eroute/all");
+	proc_symlink("ipsec_spi",       my_proc_net, "ipsec/spi/all");
+	proc_symlink("ipsec_spigrp",    my_proc_net, "ipsec/spigrp/all");
+	proc_symlink("ipsec_tncfg",     my_proc_net, "ipsec/tncfg");
+	proc_symlink("ipsec_version",   my_proc_net, "ipsec/version");
+	proc_symlink("ipsec_klipsdebug",my_proc_net, "ipsec/klipsdebug");
 
 #endif /* !PROC_FS_2325 */
 
@@ -952,6 +957,16 @@ ipsec_proc_init()
 void
 ipsec_proc_cleanup()
 {
+	struct proc_dir_entry *my_proc_net;
+
+#if defined(HAVE_NETWORK_NAMESPACE)
+	{
+		struct net *net = &init_net;
+		my_proc_net = net->proc_net;
+	}
+#else
+	my_proc_net = proc_net;
+#endif
 
 	/* for 2.0 and 2.2 kernels */
 #if !defined(PROC_FS_2325) 
@@ -999,14 +1014,14 @@ ipsec_proc_cleanup()
 
 
 #ifdef CONFIG_KLIPS_DEBUG
-	remove_proc_entry("ipsec_klipsdebug", proc_net);
+	remove_proc_entry("ipsec_klipsdebug", my_proc_net);
 #endif /* CONFIG_KLIPS_DEBUG */
-	remove_proc_entry("ipsec_eroute",     proc_net);
-	remove_proc_entry("ipsec_spi",        proc_net);
-	remove_proc_entry("ipsec_spigrp",     proc_net);
-	remove_proc_entry("ipsec_tncfg",      proc_net);
-	remove_proc_entry("ipsec_version",    proc_net);
-	remove_proc_entry("ipsec",            proc_net);
+	remove_proc_entry("ipsec_eroute",     my_proc_net);
+	remove_proc_entry("ipsec_spi",        my_proc_net);
+	remove_proc_entry("ipsec_spigrp",     my_proc_net);
+	remove_proc_entry("ipsec_tncfg",      my_proc_net);
+	remove_proc_entry("ipsec_version",    my_proc_net);
+
 #endif /* 2.4 kernel */
 }
 

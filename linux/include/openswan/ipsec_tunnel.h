@@ -63,24 +63,8 @@ struct ipsecpriv
 	char locked;
 	int  (*hard_start_xmit) (struct sk_buff *skb,
 		struct net_device *dev);
-	int  (*hard_header) (struct sk_buff *skb,
-		struct net_device *dev,
-		unsigned short type,
-		void *daddr,
-		void *saddr,
-		unsigned len);
-#ifdef NET_21
-	int  (*rebuild_header)(struct sk_buff *skb);
-#else /* NET_21 */
-	int  (*rebuild_header)(void *buff, struct net_device *dev,
-			unsigned long raddr, struct sk_buff *skb);
-#endif /* NET_21 */
 	int  (*set_mac_address)(struct net_device *dev, void *addr);
-#ifndef NET_21
-	void (*header_cache_bind)(struct hh_cache **hhp, struct net_device *dev,
-				 unsigned short htype, __u32 daddr);
-#endif /* !NET_21 */
-	void (*header_cache_update)(struct hh_cache *hh, struct net_device *dev, unsigned char *  haddr);
+
 	struct net_device_stats *(*get_stats)(struct net_device *dev);
 	struct net_device_stats mystats;
 	int mtu;	/* What is the desired MTU? */

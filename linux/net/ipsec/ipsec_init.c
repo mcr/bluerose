@@ -273,6 +273,8 @@ ipsec_klips_init(void)
         if (error)
                 goto error_tunnel_init_devices;
 
+	/* old, pre-2.6.23 code. */
+	/* new code does not require a NAT-T patch */
 #if defined(NET_26) && defined(CONFIG_IPSEC_NAT_TRAVERSAL)
 	/* register our ESP-UDP handler */
 	if(udp4_register_esp_rcvencap(klips26_rcv_encap

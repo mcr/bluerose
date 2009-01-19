@@ -43,7 +43,7 @@
 
 #include <openswan.h>
 
-#include <crypto/des.h>
+#include <crypto/klips-des.h>
 
 #ifdef SPINLOCK
 # ifdef SPINLOCK_23
@@ -289,7 +289,7 @@ pfkey_getspi_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 		SENDERR(EEXIST);
 	}
 
-	if(ip_chk_addr((unsigned long)extr->ips->ips_said.dst.u.v4.sin_addr.s_addr) == IS_MYADDR) {
+	if(inet_addr_type(&init_net, (unsigned long)extr->ips->ips_said.dst.u.v4.sin_addr.s_addr) == IS_MYADDR) {
 		extr->ips->ips_flags |= EMT_INBOUND;
 	}
 	
@@ -438,7 +438,7 @@ pfkey_update_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 		SENDERR(ENOENT);
 	}
 
-	if(ip_chk_addr((unsigned long)extr->ips->ips_said.dst.u.v4.sin_addr.s_addr) == IS_MYADDR) {
+	if(inet_addr_type(&init_net, (unsigned long)extr->ips->ips_said.dst.u.v4.sin_addr.s_addr) == IS_MYADDR) {
 		extr->ips->ips_flags |= EMT_INBOUND;
 	}
 
@@ -707,7 +707,7 @@ pfkey_add_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_extr
 		SENDERR(EEXIST);
 	}
 
-	if(ip_chk_addr((unsigned long)extr->ips->ips_said.dst.u.v4.sin_addr.s_addr) == IS_MYADDR) {
+	if(inet_addr_type(&init_net, (unsigned long)extr->ips->ips_said.dst.u.v4.sin_addr.s_addr) == IS_MYADDR) {
 		extr->ips->ips_flags |= EMT_INBOUND;
 	}
 

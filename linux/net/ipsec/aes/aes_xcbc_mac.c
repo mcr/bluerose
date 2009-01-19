@@ -8,7 +8,7 @@
 #define AES_DEBUG(x) x
 #endif
 
-#include "crypto/aes.h"
+#include "crypto/klips-aes.h"
 #include "crypto/aes_xcbc_mac.h"
 
 int AES_xcbc_mac_set_key(aes_context_mac *ctxm, const u_int8_t *key, int keylen)

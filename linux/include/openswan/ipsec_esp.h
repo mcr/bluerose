@@ -18,7 +18,7 @@
 #include "openswan/ipsec_md5h.h"
 #include "openswan/ipsec_sha1.h"
 
-#include "crypto/des.h"
+#include "crypto/klips-des.h"
 
 #ifndef IPPROTO_ESP
 #define IPPROTO_ESP 50

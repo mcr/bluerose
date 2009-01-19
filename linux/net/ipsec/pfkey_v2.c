@@ -101,7 +101,7 @@ struct socket_list *pfkey_registered_sockets[SADB_SATYPE_MAX+1];
 
 int pfkey_msg_interp(struct sock *, struct sadb_msg *, struct sadb_msg **);
 
-DEBUG_NO_STATIC int pfkey_create(struct socket *sock, int protocol);
+DEBUG_NO_STATIC int pfkey_create(struct net *net, struct socket *sock, int protocol);
 DEBUG_NO_STATIC int pfkey_shutdown(struct socket *sock, int mode);
 DEBUG_NO_STATIC int pfkey_release(struct socket *sock);
 
@@ -115,8 +115,8 @@ DEBUG_NO_STATIC int pfkey_recvmsg(struct socket *sock, struct msghdr *msg, int s
 #endif
 
 struct net_proto_family pfkey_family_ops = {
-	PF_KEY,
-	pfkey_create
+	family: PF_KEY,
+	create: pfkey_create
 };
 
 struct proto_ops SOCKOPS_WRAPPED(pfkey_ops) = {
@@ -638,7 +638,7 @@ static struct proto key_proto = {
 #endif
 
 DEBUG_NO_STATIC int
-pfkey_create(struct socket *sock, int protocol)
+pfkey_create(struct net *net, struct socket *sock, int protocol)
 {
 	struct sock *sk;
 
@@ -682,17 +682,7 @@ pfkey_create(struct socket *sock, int protocol)
 
 	KLIPS_INC_USE;
 
-#ifdef NET_26
-#ifdef NET_26_12_SKALLOC
-	sk=(struct sock *)sk_alloc(PF_KEY, GFP_KERNEL, &key_proto, 1);
-#else
-	sk=(struct sock *)sk_alloc(PF_KEY, GFP_KERNEL, 1, NULL);
-#endif
-#else
-	/* 2.4 interface */
-	sk=(struct sock *)sk_alloc(PF_KEY, GFP_KERNEL, 1);
-#endif
-
+	sk=(struct sock *)sk_alloc(net, PF_KEY, GFP_KERNEL, &key_proto);
 	if(sk == NULL)
 	{
 		KLIPS_PRINT(debug_pfkey,
@@ -1111,15 +1101,9 @@ pfkey_recvmsg(struct socket *sock
 }
 
 #ifdef CONFIG_PROC_FS
-#ifndef PROC_FS_2325
-DEBUG_NO_STATIC
-#endif /* PROC_FS_2325 */
-int
-pfkey_get_info(char *buffer, char **start, off_t offset, int length
-#ifndef  PROC_NO_DUMMY
-, int dummy
-#endif /* !PROC_NO_DUMMY */
-)
+DEBUG_NO_STATIC int
+pfkey_get_info(char *buffer, char **start, off_t offset,
+	       int length, int *eof, void *data)
 {
 	const int max_content = length > 0? length-1 : 0;	/* limit of useful snprintf output */
 #ifdef NET_26
@@ -1206,15 +1190,9 @@ pfkey_get_info(char *buffer, char **start, off_t offset, int length
 	return len - (offset - begin);
 }
 
-#ifndef PROC_FS_2325
-DEBUG_NO_STATIC
-#endif /* PROC_FS_2325 */
-int
-pfkey_supported_get_info(char *buffer, char **start, off_t offset, int length
-#ifndef  PROC_NO_DUMMY
-, int dummy
-#endif /* !PROC_NO_DUMMY */
-)
+DEBUG_NO_STATIC int
+pfkey_supported_get_info(char *buffer, char **start, off_t offset,
+			 int length, int *eof, void *data)
 {
 	/* limit of useful snprintf output */
 	const int max_content = length > 0? length-1 : 0;	
@@ -1266,15 +1244,9 @@ pfkey_supported_get_info(char *buffer, char **start, off_t offset, int length
 	return len - (offset - begin);
 }
 
-#ifndef PROC_FS_2325
-DEBUG_NO_STATIC
-#endif /* PROC_FS_2325 */
-int
-pfkey_registered_get_info(char *buffer, char **start, off_t offset, int length
-#ifndef  PROC_NO_DUMMY
-, int dummy
-#endif /* !PROC_NO_DUMMY */
-)
+DEBUG_NO_STATIC int
+pfkey_registered_get_info(char *buffer, char **start, off_t offset,
+			  int length, int *eof, void *data)
 {
 	const int max_content = length > 0? length-1 : 0;	/* limit of useful snprintf output */
 	off_t begin=0;
@@ -1415,6 +1387,7 @@ supported_remove_all(int satype)
 int
 pfkey_init(void)
 {
+	struct proc_dir_entry *my_proc_net;
 	int error = 0;
 	int i;
 	
@@ -1471,30 +1444,21 @@ pfkey_init(void)
 
         error |= sock_register(&pfkey_family_ops);
 
-#ifdef CONFIG_PROC_FS
-#  ifndef PROC_FS_2325
-#    ifdef PROC_FS_21
-	error |= proc_register(proc_net, &proc_net_pfkey);
-	error |= proc_register(proc_net, &proc_net_pfkey_supported);
-	error |= proc_register(proc_net, &proc_net_pfkey_registered);
-#    else /* PROC_FS_21 */
-	error |= proc_register_dynamic(&proc_net, &proc_net_pfkey);
-	error |= proc_register_dynamic(&proc_net, &proc_net_pfkey_supported);
-	error |= proc_register_dynamic(&proc_net, &proc_net_pfkey_registered);
-#    endif /* PROC_FS_21 */
-#  else /* !PROC_FS_2325 */
-	proc_net_create ("pf_key", 0, pfkey_get_info);
-	proc_net_create ("pf_key_supported", 0, pfkey_supported_get_info);
-	proc_net_create ("pf_key_registered", 0, pfkey_registered_get_info);
-#  endif /* !PROC_FS_2325 */
-#endif /* CONFIG_PROC_FS */
-
+	{
+		struct net *net = &init_net;
+		my_proc_net = net->proc_net;
+		create_proc_read_entry("pf_key",            0, my_proc_net, pfkey_get_info, NULL);
+		create_proc_read_entry("pf_key_supported",  0, my_proc_net, pfkey_supported_get_info, NULL);
+		create_proc_read_entry("pf_key_registered", 0, my_proc_net, pfkey_registered_get_info, NULL);
+	}
+		
 	return error;
 }
 
 int
 pfkey_cleanup(void)
 {
+	struct proc_dir_entry *my_proc_net;
 	int error = 0;
 	
         printk(KERN_INFO "klips_info:pfkey_cleanup: "
@@ -1513,21 +1477,14 @@ pfkey_cleanup(void)
 	error |= supported_remove_all(SADB_X_SATYPE_IPIP);
 
 #ifdef CONFIG_PROC_FS
-#  ifndef PROC_FS_2325
-	if (proc_net_unregister(proc_net_pfkey.low_ino) != 0)
-		printk("klips_debug:pfkey_cleanup: "
-		       "cannot unregister /proc/net/pf_key\n");
-	if (proc_net_unregister(proc_net_pfkey_supported.low_ino) != 0)
-		printk("klips_debug:pfkey_cleanup: "
-		       "cannot unregister /proc/net/pf_key_supported\n");
-	if (proc_net_unregister(proc_net_pfkey_registered.low_ino) != 0)
-		printk("klips_debug:pfkey_cleanup: "
-		       "cannot unregister /proc/net/pf_key_registered\n");
-#  else /* !PROC_FS_2325 */
-	proc_net_remove ("pf_key");
-	proc_net_remove ("pf_key_supported");
-	proc_net_remove ("pf_key_registered");
-#  endif /* !PROC_FS_2325 */
+	{
+		struct net *net = &init_net;
+		my_proc_net = net->proc_net;
+
+		remove_proc_entry("pf_key", my_proc_net);
+		remove_proc_entry("pf_key_supported", my_proc_net);
+		remove_proc_entry("pf_key_registered", my_proc_net);
+	}
 #endif /* CONFIG_PROC_FS */
 
 	/* other module unloading cleanup happens here */
