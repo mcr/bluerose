@@ -267,8 +267,8 @@ int klips_header_parse(const struct sk_buff *skb, unsigned char *haddr)
 		ret = prv->dev->header_ops->parse(skb, haddr);
 #if 0
 		skb->dev = tmp;
-	}
 #endif
+	}
 	return ret;
 }
 
