@@ -285,9 +285,11 @@ ipsec_klips_init(void)
 
 
 #ifdef CONFIG_SYSCTL
+#ifdef CONFIG_KLIPS_SYSCTL
         error |= ipsec_sysctl_register();
         if (error)
                 goto error_sysctl_register;
+#endif
 #endif                                                                          
 
 	ipsec_alg_init();
@@ -344,7 +346,9 @@ ipsec_cleanup(void)
 	int error = 0;
 
 #ifdef CONFIG_SYSCTL
+#ifdef CONFIG_KLIPS_SYSCTL
         ipsec_sysctl_unregister();
+#endif
 #endif                                                                          
 #if defined(NET_26) && defined(CONFIG_IPSEC_NAT_TRAVERSAL)
 	if(udp4_unregister_esp_rcvencap(klips_old_encap) < 0) {
