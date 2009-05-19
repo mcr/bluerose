@@ -993,6 +993,7 @@ ipsec_mast_init(struct net_device *dev)
 	dev->stop		= ipsec_mast_close;
 	dev->hard_start_xmit	= ipsec_mast_start_xmit;
 	dev->get_stats		= ipsec_mast_get_stats;
+	dev->destructor         = free_netdev;
 
 	dev->priv = kmalloc(sizeof(struct ipsecpriv), GFP_KERNEL);
 	if (dev->priv == NULL)
@@ -1020,6 +1021,9 @@ ipsec_mast_init(struct net_device *dev)
 	/* New-style flags. */
 	dev->flags		= IFF_NOARP /* 0 */ /* Petr Novak */;
 	dev_init_buffers(dev);
+
+	/* pick a random ethernet address for now. */
+	random_ether_addr(dev->dev_addr);
 
 	/* We're done.  Have I forgotten anything? */
 	return 0;
@@ -1063,32 +1067,3 @@ ipsec_mast_cleanup_devices(void)
 	return error;
 }
 
-/*
- * $Log: ipsec_mast.c,v $
- * Revision 1.7  2005/04/29 05:10:22  mcr
- * 	removed from extraenous includes to make unit testing easier.
- *
- * Revision 1.6  2004/12/03 21:25:57  mcr
- * 	compile time fixes for running on 2.6.
- * 	still experimental.
- *
- * Revision 1.5  2004/08/03 18:19:08  mcr
- * 	in 2.6, use "net_device" instead of #define device->net_device.
- * 	this probably breaks 2.0 compiles.
- *
- * Revision 1.4  2004/07/10 19:11:18  mcr
- * 	CONFIG_IPSEC -> CONFIG_KLIPS.
- *
- * Revision 1.3  2003/10/31 02:27:55  mcr
- * 	pulled up port-selector patches and sa_id elimination.
- *
- * Revision 1.2.4.1  2003/10/29 01:30:41  mcr
- * 	elimited "struct sa_id".
- *
- * Revision 1.2  2003/06/22 20:06:17  mcr
- * 	refactored mast code still had lots of ipsecX junk in it.
- *
- * Revision 1.1  2003/02/12 19:31:12  rgb
- * Refactored from ipsec_tunnel.c
- *
- */
