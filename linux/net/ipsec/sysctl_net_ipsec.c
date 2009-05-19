@@ -28,7 +28,8 @@
 
 #ifdef CONFIG_SYSCTL
 
-#define NET_IPSEC 2112 /* Random number */                                        
+#define NET_IPSEC   CTL_UNNUMBERED 
+                             
 #ifdef CONFIG_KLIPS_DEBUG
 extern int       debug_ah;
 extern int       debug_esp;
@@ -74,7 +75,6 @@ enum {
 
 static ctl_table ipsec_table[] = {
 #ifdef CONFIG_KLIPS_DEBUG
-#ifdef CTL_TABLE_PARENT
        { .ctl_name = NET_IPSEC_DEBUG_AH,
          .procname = "debug_ah",
          .data     = &debug_ah,
@@ -173,34 +173,9 @@ static ctl_table ipsec_table[] = {
          .child    = NULL,
          .proc_handler = &proc_dointvec,
        },
-#else
-	{ NET_IPSEC_DEBUG_AH, "debug_ah", &debug_ah,
-	  sizeof(int), 0644, NULL, .proc_handler = &proc_dointvec},    
-	{ NET_IPSEC_DEBUG_ESP, "debug_esp", &debug_esp,
-	  sizeof(int), 0644, NULL, .proc_handler = &proc_dointvec},    
-	{ NET_IPSEC_DEBUG_TUNNEL, "debug_tunnel", &debug_tunnel,
-	  sizeof(int), 0644, NULL, .proc_handler = &proc_dointvec},    
-	{ NET_IPSEC_DEBUG_EROUTE, "debug_eroute", &debug_eroute,
-	  sizeof(int), 0644, NULL, .proc_handler = &proc_dointvec},    
-	{ NET_IPSEC_DEBUG_SPI, "debug_spi", &debug_spi,
-	  sizeof(int), 0644, NULL, .proc_handler = &proc_dointvec},    
-	{ NET_IPSEC_DEBUG_RADIJ, "debug_radij", &debug_radij,
-	  sizeof(int), 0644, NULL, .proc_handler = &proc_dointvec},    
-	{ NET_IPSEC_DEBUG_NETLINK, "debug_netlink", &debug_netlink,
-	  sizeof(int), 0644, NULL, .proc_handler = &proc_dointvec},    
-	{ NET_IPSEC_DEBUG_XFORM, "debug_xform", &debug_xform,
-	  sizeof(int), 0644, NULL, .proc_handler = &proc_dointvec},    
-	{ NET_IPSEC_DEBUG_RCV, "debug_rcv", &debug_rcv,
-	  sizeof(int), 0644, NULL, .proc_handler = &proc_dointvec},    
-	{ NET_IPSEC_DEBUG_PFKEY, "debug_pfkey", &debug_pfkey,
-	  sizeof(int), 0644, NULL, .proc_handler = &proc_dointvec},    
-	{ NET_IPSEC_DEBUG_VERBOSE, "debug_verbose",&sysctl_ipsec_debug_verbose,
-	  sizeof(int), 0644, NULL, .proc_handler = &proc_dointvec},    
-#endif /* CTL_TABLE_PARENT */
 #endif /* CONFIG_KLIPS_DEBUG */
 
 #ifdef CONFIG_KLIPS_IPCOMP
-#ifdef CTL_TABLE_PARENT
         { .ctl_name = NET_IPSEC_DEBUG_IPCOMP,
          .procname = "debug_ipcomp",
          .data     = &sysctl_ipsec_debug_ipcomp,
@@ -209,14 +184,9 @@ static ctl_table ipsec_table[] = {
          .child    = NULL,
          .proc_handler = &proc_dointvec,
        },
-#else
-	{ NET_IPSEC_DEBUG_IPCOMP, "debug_ipcomp", &sysctl_ipsec_debug_ipcomp,
-	  sizeof(int), 0644, NULL, .proc_handler = &proc_dointvec},    
-#endif
 #endif /* CONFIG_KLIPS_IPCOMP */
 
 #ifdef CONFIG_KLIPS_REGRESS
-#ifdef CTL_TABLE_PARENT
        {
          .ctl_name = NET_IPSEC_REGRESS_PFKEY_LOSSAGE,
          .procname = "pfkey_lossage",
@@ -226,14 +196,8 @@ static ctl_table ipsec_table[] = {
          .child    = NULL,
          .proc_handler = &proc_dointvec,
        },
-#else
-	{ NET_IPSEC_REGRESS_PFKEY_LOSSAGE, "pfkey_lossage",
-	  &sysctl_ipsec_regress_pfkey_lossage,
-	  sizeof(int), 0644, NULL, .proc_handler = &proc_dointvec},
-#endif /* CTL_TABLE_PARENT */
 #endif /* CONFIG_KLIPS_REGRESS */
 
-#ifdef CTL_TABLE_PARENT
        { .ctl_name = NET_IPSEC_ICMP,
          .procname = "icmp",
          .data     = &sysctl_ipsec_icmp,
@@ -261,20 +225,10 @@ static ctl_table ipsec_table[] = {
           .proc_handler = &proc_dointvec,
        },
        {0}
-#else
-	{ NET_IPSEC_ICMP, "icmp", &sysctl_ipsec_icmp,
-	  sizeof(int), 0644, NULL, .proc_handler = &proc_dointvec},    
-	{ NET_IPSEC_INBOUND_POLICY_CHECK, "inbound_policy_check", &sysctl_ipsec_inbound_policy_check,
-	  sizeof(int), 0644, NULL, .proc_handler = &proc_dointvec},    
-	{ NET_IPSEC_TOS, "tos", &sysctl_ipsec_tos,
-	  sizeof(int), 0644, NULL, .proc_handler = &proc_dointvec},    
-	{0}
-#endif
 };
 
 static ctl_table ipsec_net_table[] = {
-#ifdef CTL_TABLE_PARENT
-       { .ctl_name = NET_IPSEC,
+	{ .ctl_name = NET_IPSEC,
           .procname = "ipsec",
           .data     = NULL,
           .maxlen   = 0,
@@ -282,16 +236,11 @@ static ctl_table ipsec_net_table[] = {
           .child    = ipsec_table,
           .proc_handler = NULL,
         },
-       { 0 }
-#else
-        { NET_IPSEC, "ipsec", NULL, 0, 0555, ipsec_table },
-        { 0 }
-#endif
+	{ 0 }
 };
  
 static ctl_table ipsec_root_table[] = {
-#ifdef CTL_TABLE_PARENT
-       { .ctl_name = CTL_NET,
+	{ .ctl_name = CTL_NET,
           .procname = "net",
           .data     = NULL,
           .maxlen   = 0,
@@ -299,12 +248,9 @@ static ctl_table ipsec_root_table[] = {
           .child    = ipsec_net_table,
           .proc_handler = NULL,
         },
-       { 0 }
-#else
-        { CTL_NET, "net", NULL, 0, 0555, ipsec_net_table },
-        { 0 }
-#endif
+	{ 0 }
 };
+
  
 static struct ctl_table_header *ipsec_table_header;
 
