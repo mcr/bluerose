@@ -1565,31 +1565,26 @@ ipsec_device_event(struct notifier_block *unused, unsigned long event, void *ptr
 	return NOTIFY_DONE;
 }
 
-/*
- *	Called when an ipsec tunnel device is initialized.
- *	The ipsec tunnel device structure is passed to us.
- */
- 
-int
-ipsec_tunnel_init(struct net_device *dev)
+void
+ipsec_tunnel_setup(struct net_device *dev)
 {
 	int i;
 
-	KLIPS_PRINT(debug_tunnel,
-		    "klips_debug:ipsec_tunnel_init: "
-		    "allocating %lu bytes initialising device: %s\n",
-		    (unsigned long) sizeof(struct ipsecpriv),
-		    dev->name ? dev->name : "NULL");
+	KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
+		    "klips_debug:ipsec_tunnel_init_devices: "
+		    "registering device %s\n",
+		    dev->name);
 
 	/* Add our tunnel functions to the device */
 	dev->open		= ipsec_tunnel_open;
 	dev->stop		= ipsec_tunnel_close;
 	dev->hard_start_xmit	= ipsec_tunnel_start_xmit;
 	dev->get_stats		= ipsec_tunnel_get_stats;
+	dev->destructor         = free_netdev;
 
 	dev->priv = kmalloc(sizeof(struct ipsecpriv), GFP_KERNEL);
 	if (dev->priv == NULL)
-		return -ENOMEM;
+		return;
 	memset((caddr_t)(dev->priv), 0, sizeof(struct ipsecpriv));
 
 	for(i = 0; i < sizeof(zeroes); i++) {
@@ -1606,31 +1601,61 @@ ipsec_tunnel_init(struct net_device *dev)
 	dev->hard_header_len 	= 0;
 	dev->mtu		= 0;
 	dev->addr_len		= 0;
-	dev->type		= ARPHRD_VOID; /* ARPHRD_TUNNEL; */ /* ARPHRD_ETHER; */
+	dev->type		= ARPHRD_VOID;
+                                /* ARPHRD_TUNNEL; */
+                                /* ARPHRD_ETHER; */
 	dev->tx_queue_len	= 10;		/* Small queue */
-	memset((caddr_t)(dev->broadcast),0xFF, ETH_ALEN);	/* what if this is not attached to ethernet? */
+
+        /* what if this is not attached to ethernet? */
+	memset((caddr_t)(dev->broadcast),0xFF, ETH_ALEN);
 
 	/* New-style flags. */
-	dev->flags		= IFF_NOARP /* 0 */ /* Petr Novak */;
+	dev->flags		= IFF_NOARP;
+
+	/* pick a random ethernet address for now. */
+	random_ether_addr(dev->dev_addr);
+
+	dev->header_ops		= &klips_header_ops;
+
+#if 0 
+	/* we need something here, perhaps */
+	dev->change_mtu		= eth_change_mtu;
+	dev->set_mac_address 	= eth_mac_addr;
+	dev->validate_addr	= eth_validate_addr;
+#endif
+
+	dev->type		= ARPHRD_ETHER;
+	dev->hard_header_len 	= ETH_HLEN;
+	dev->mtu		= ETH_DATA_LEN;
+	dev->addr_len		= ETH_ALEN;
+	dev->tx_queue_len	= 1000;	/* Ethernet wants good queues */
+	dev->flags		= IFF_BROADCAST|IFF_MULTICAST;
+
+	memset(dev->broadcast, 0xFF, ETH_ALEN);
 
 	/* We're done.  Have I forgotten anything? */
-	return 0;
-}
-
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-/*  Module specific interface (but it links with the rest of IPSEC)  */
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
-int
-ipsec_tunnel_probe(struct net_device *dev)
-{
-	ipsec_tunnel_init(dev); 
-	return 0;
+	return;
 }
 
 struct net_device *ipsecdevices[IPSEC_NUM_IF];
 
-int 
+static int ipsec_validate(struct nlattr *tb[], struct nlattr *data[])
+{
+	if (tb[IFLA_ADDRESS]) {
+		if (nla_len(tb[IFLA_ADDRESS]) != ETH_ALEN)
+			return -EINVAL;
+		if (!is_valid_ether_addr(nla_data(tb[IFLA_ADDRESS])))
+			return -EADDRNOTAVAIL;
+	}
+	return 0;
+}
+static struct rtnl_link_ops ipsec_link_ops __read_mostly = {
+	.kind		= "ipsec",
+	.setup		= ipsec_tunnel_setup,
+	.validate	= ipsec_validate,
+};
+
+int
 ipsec_tunnel_init_devices(void)
 {
 	int i;
@@ -1645,8 +1670,11 @@ ipsec_tunnel_init_devices(void)
 		    IFNAMSIZ);
 
 	for(i = 0; i < IPSEC_NUM_IF; i++) {
+		int err;
+
 		sprintf(name, IPSEC_DEV_FORMAT, i);
-		dev_ipsec = (struct net_device*)kmalloc(sizeof(struct net_device), GFP_KERNEL);
+
+		dev_ipsec = alloc_netdev(0, "ipsec%d", ipsec_tunnel_setup);
 		if (dev_ipsec == NULL) {
 			KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
 				    "klips_debug:ipsec_tunnel_init_devices: "
@@ -1654,29 +1682,12 @@ ipsec_tunnel_init_devices(void)
 				    name);
 			return -ENOMEM;
 		}
-		memset((caddr_t)dev_ipsec, 0, sizeof(struct net_device));
-#ifdef NETDEV_23
-		strncpy(dev_ipsec->name, name, sizeof(dev_ipsec->name));
-#else /* NETDEV_23 */
-		dev_ipsec->name = (char*)kmalloc(IFNAMSIZ, GFP_KERNEL);
-		if (dev_ipsec->name == NULL) {
-			KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
-				    "klips_debug:ipsec_tunnel_init_devices: "
-				    "failed to allocate memory for device %s name, quitting device init.\n",
-				    name);
-			return -ENOMEM;
-		}
-		memset((caddr_t)dev_ipsec->name, 0, IFNAMSIZ);
-		strncpy(dev_ipsec->name, name, IFNAMSIZ);
-#endif /* NETDEV_23 */
-#ifdef HAVE_DEV_NEXT
-		dev_ipsec->next = NULL;
-#endif
-		dev_ipsec->init = &ipsec_tunnel_probe;
-		KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
-			    "klips_debug:ipsec_tunnel_init_devices: "
-			    "registering device %s\n",
-			    dev_ipsec->name);
+
+		err = dev_alloc_name(dev_ipsec, dev_ipsec->name);
+		if (err < 0)
+			goto err;
+
+		dev_ipsec->rtnl_link_ops = &ipsec_link_ops;
 
 		/* reference and hold the device reference */
 		dev_hold(dev_ipsec);
@@ -1696,6 +1707,9 @@ ipsec_tunnel_init_devices(void)
 		}
 	}
 	return 0;
+
+err:
+	return -EIO;
 }
 
 /* void */
