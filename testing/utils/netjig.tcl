@@ -117,7 +117,7 @@ proc newswitch {netjig net} {
 	}
 	set var   $expect_out(1,string)
 	set value $expect_out(2,string)
-	netjigcmddebug "Setting $var to $value|\n"
+	netjigcmddebug "Setting export $var=$value|\n"
 	set env($var) $value
 	set lines [expr $lines - 1]
     }
