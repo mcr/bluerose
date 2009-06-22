@@ -90,9 +90,6 @@ while { [ set err [ getopt $argv "c:D:H:i:I:n:ap:P:r:R:s:u:U:" opt optarg]] } {
 	    n {
 		set netjig_prog $optarg
 	    }
-	    a {
-		set arpreply "--arpreply"
-	    }
 	    p {
 		set playprivate $optarg
 		set do_playprivate 1
