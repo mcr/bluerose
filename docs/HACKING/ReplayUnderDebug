@@ -1,2 +1,182 @@
 -*- emacs-wiki -*-
 
+This file explains how to run the KLIPS unit tests in a way that permits
+both uml_netjig and the kernel to be debugged.
+
+You will need 2-3 terminals.  Do not try this without copy&paste
+capabilities!  
+
+In both terminals, go to the root of your tree and run:
+<example>
+   MYBOX=`pwd`; export MYBOX
+</example>
+
+in terminal 1, cd to the directory of the test case you want to run.
+
+<example>
+% export NETJIGDEBUG=true
+% ../../utils/runme.sh
+</example>
+
+Note the NETJIGCMD printed.
+Mine looked like:
+<example>
+expect -f /osw/bluerose-1/testing/utils/host-test.tcl -- -U east -u /uml/bluerose-1/UMLPOOL/east/start.sh -i spi1.sh -n /osw/bluerose-1/testing/utils/uml_netjig/uml_netjig -p ../inputs/01-sunrise-sunset-ping.pcap -c OUTPUT/26console.txt -R OUTPUT/spi1-output.pcap
+</example>
+
+<example>
+export NETJIGTESTDEBUG=netjig
+</example>
+
+This mode is also designed for debugging *NETJIG* itself. That is why it
+sleeps for 60s, so you can attach the debugger to it.
+
+Run the test case and record the output.
+Mine is:
+<example>
+Debugging enabled, sleeping for 60 seconds. Pid=15957
+Sending setrate 100
+There are 1 lines of output
+looking for umlid(netpublic,arp)=--arpreply
+Sending NEWSWITCH --arpreply public
+There are 3 lines of output
+Setting ARPREPLY to 1|
+Setting UML_public_CTL to /tmp/umlmr5nlB.d/public/ctl|
+Setting UML_public_DATA to /tmp/umlmr5nlB.d/public/data|
+looking for umlid(netprivate,arp)=--arpreply
+Sending NEWSWITCH --arpreply private
+There are 3 lines of output
+Setting ARPREPLY to 1|
+Setting UML_private_CTL to /tmp/umlmr5nlB.d/private/ctl|
+Setting UML_private_DATA to /tmp/umlmr5nlB.d/private/data|
+Sending NEWSWITCH admin
+There are 3 lines of output
+Setting ARPREPLY to 0|
+Setting UML_admin_CTL to /tmp/umlmr5nlB.d/admin/ctl|
+Setting UML_admin_DATA to /tmp/umlmr5nlB.d/admin/data|
+Sending RECORDFILE --switchname=public --recordfile=OUTPUT/spi1-output.pcap
+uml_netjig: will record OUTPUT/spi1-output.pcap from 'public' network
+There are 0 lines of output
+Sending PLAYFILE --switchname=private --playfile=../inputs/01-sunrise-sunset-ping.pcap
+uml_netjig: will play ../inputs/01-sunrise-sunset-ping.pcap to 'private' network
+</example>
+
+You are now set to run the uml_netjig command manually.
+
+I ran:
+<example>
+/osw/bluerose-1/testing/utils/uml_netjig/uml_netjig --cmdproto --tcpdump
+OK netjig>
+</example>
+
+This is a prompt. The prompt is designed for ease of use with expect.
+You now need to write the right commands, they are listed above:
+
+<example>
+OK netjig>setrate 100
+OK 1 LINES
+packetrate=100
+OK netjig>NEWSWITCH --arpreply public
+OK 3 LINES
+ARPREPLY=1
+UML_public_CTL=/tmp/umlzmQSx4.d/public/ctl
+UML_public_DATA=/tmp/umlzmQSx4.d/public/data
+OK netjig>NEWSWITCH --arpreply private
+OK 3 LINES
+ARPREPLY=1
+UML_private_CTL=/tmp/umlzmQSx4.d/private/ctl
+UML_private_DATA=/tmp/umlzmQSx4.d/private/data
+OK netjig>NEWSWITCH admin
+OK 3 LINES
+ARPREPLY=0
+UML_admin_CTL=/tmp/umlzmQSx4.d/admin/ctl
+UML_admin_DATA=/tmp/umlzmQSx4.d/admin/data
+OK netjig>RECORDFILE --switchname=public --recordfile=OUTPUT/spi1-output.pcap
+OK 0 LINES
+OK netjig>PLAYFILE --switchname=private --playfile=../inputs/01-sunrise-sunset-ping.pcap
+OK 0 LINES
+OK netjig>
+</example>
+
+At this point, the netjig is live, and is waiting for a User Mode Linux to
+connect to it.  Netjig has output some variables which must be placed into
+the environment in terminal window 2.  You must repeat this each time you
+restart netjig.
+
+Copy and paste the variables to terminal 2:
+
+<example>
+% export UML_public_CTL=/tmp/umlzmQSx4.d/public/ctl
+% export UML_private_CTL=/tmp/umlzmQSx4.d/private/ctl
+% export UML_admin_CTL=/tmp/umlzmQSx4.d/admin/ctl
+% UMLPOOL/east/start.sh single
+</example>
+
+You should see the that the UML image loading connects to the right network
+device:
+
+<example>
+Netdevice 0 (12:00:00:dc:bc:ff) : daemon backend (uml_switch version 3) - unix:/tmp/umlzmQSx4.d/private/ctl
+Netdevice 1 (12:00:00:64:64:23) : daemon backend (uml_switch version 3) - unix:/tmp/umlzmQSx4.d/public/ctl
+Netdevice 2 (12:00:00:32:64:23) : daemon backend (uml_switch version 3) - unix:/tmp/umlzmQSx4.d/admin/ctl
+</example>
+
+At this point, the plumbing is hooked up, and the netjig is ready to play
+a recorded pcap file back.  Each time you type the command "TICK" it will 
+send a single packet though.
+
+<example>
+OK netjig>help
+FAIL 11 LINES
+        newswitch
+        playfile
+        recordfile
+        quit
+        waitplay
+        tick
+        setrate
+        setarp
+        debug
+        chdir
+        cd
+FAIL stat=1 netjig>
+</example>
+
+First, setup the test case inside the UML:
+
+<example>
+east:/testing/klips/east-icmp-01# source spi1.sh
+east:/testing/klips/east-icmp-01# tcpdump -i eth0 -n & 
+</example>
+
+<example>
+OK netjig> tick
+</example>
+
+and in east window, you will see:
+<example>
+02:16:47.721388 IP 192.0.2.1 > 192.0.1.1: ICMP echo request, id 28416, seq 1536, length 64
+</example>
+
+You will also see traffic printed in terminal 1 by netjig.
+If you linked it with "libdissect", then the packets will be decoded by
+tcpdump. If not, they are just hex dumped.
+
+Note that the netjig will answer ARP requests that it sees on the public
+network (the network that encrypted packets will traverse).  This is because
+of the --arpreply option.
+
+To debug the kernel in this situation, you would start "gdb" (or gdbtui)
+instead of running 
+<example>
+% UMLPOOL/east/start.sh single
+</example>
+
+such as by using the script
+<example>
+% UMLPOOL/east/startgdb.sh single
+</example>
+
+
+
+
