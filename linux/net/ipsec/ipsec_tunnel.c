@@ -1115,7 +1115,8 @@ DEBUG_NO_STATIC int
 ipsec_tunnel_neigh_setup(struct neighbour *n)
 {
 	KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
-		    "klips_debug:ipsec_tunnel_neigh_setup:\n");
+		    "klips_debug:ipsec_tunnel_neigh_setup with state=%u (%u=NUD_NONE)\n"
+		    , n->nud_state, NUD_NONE);
 
         if (n->nud_state == NUD_NONE) {
                 n->ops = &arp_broken_ops;
@@ -1601,16 +1602,10 @@ ipsec_tunnel_setup(struct net_device *dev)
 	dev->hard_header_len 	= 0;
 	dev->mtu		= 0;
 	dev->addr_len		= 0;
-	dev->type		= ARPHRD_VOID;
-                                /* ARPHRD_TUNNEL; */
-                                /* ARPHRD_ETHER; */
 	dev->tx_queue_len	= 10;		/* Small queue */
 
         /* what if this is not attached to ethernet? */
 	memset((caddr_t)(dev->broadcast),0xFF, ETH_ALEN);
-
-	/* New-style flags. */
-	dev->flags		= IFF_NOARP;
 
 	/* pick a random ethernet address for now. */
 	random_ether_addr(dev->dev_addr);
@@ -1629,7 +1624,7 @@ ipsec_tunnel_setup(struct net_device *dev)
 	dev->mtu		= ETH_DATA_LEN;
 	dev->addr_len		= ETH_ALEN;
 	dev->tx_queue_len	= 1000;	/* Ethernet wants good queues */
-	dev->flags		= IFF_BROADCAST|IFF_MULTICAST;
+	dev->flags		= IFF_NOARP;
 
 	memset(dev->broadcast, 0xFF, ETH_ALEN);
 
