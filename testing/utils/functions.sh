@@ -667,7 +667,7 @@ netjigtest() {
     rm -f OUTPUT${KLIPS_MODULE}/console.txt
 
     cmd="expect -f $UTILS/host-test.tcl -- -U $TESTHOST -u $HOST_START -i ${INIT_SCRIPT} -n $NJ $NJARGS"
-    $NETJIGDEBUG && echo $cmd
+    $NETJIGDEBUG && echo NETJIGCMD: $cmd
     eval $cmd
 
     #uml_mconsole $TESTHOST halt
@@ -1659,7 +1659,7 @@ do_umlX_test() {
     rm -f OUTPUT${KLIPS_MODULE}/japanconsole.txt
 
     cmd="expect -f $UTILS/Xhost-test.tcl -- -n $NJ $EXP2_ARGS "
-    $NETJIGDEBUG && echo $cmd
+    $NETJIGDEBUG && echo NETJIGCMD: $cmd
     eval $cmd
 
     pcap_filter west   "${REF_WEST_OUTPUT-}" "$WESTOUTPUT" "${REF_WEST_FILTER-}"
