@@ -44,7 +44,7 @@
 #endif
 
 /* default number of ipsecX devices to create */
-#define IPSEC_NUM_IF	2
+#define IPSEC_NUM_IF	1
 
 /* The field width must be < IF_NAM_SIZ - strlen("ipsec") - 1. */
 /* With "ipsec" being 5 characters, that means 10 is the max field width */
