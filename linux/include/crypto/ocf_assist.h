@@ -30,7 +30,7 @@
 /****************************************************************************/
 
 #include <sys/types.h>
-#include "aes.h"
+#include "klips-aes.h"
 #include "des.h"
 
 extern int	ocf_aes_assist(void);
