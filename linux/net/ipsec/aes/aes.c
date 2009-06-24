@@ -32,7 +32,7 @@
  *  - Removed some totally unused constants.
  */
 
-#include "crypto/aes.h"
+#include "crypto/klips-aes.h"
 
 // CONFIGURATION OPTIONS (see also aes.h)
 //
