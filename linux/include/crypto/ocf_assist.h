@@ -31,7 +31,7 @@
 
 #include <sys/types.h>
 #include "klips-aes.h"
-#include "des.h"
+#include "klips-des.h"
 
 extern int	ocf_aes_assist(void);
 extern void	ocf_aes_set_key(aes_context *cx, const unsigned char in_key[],
