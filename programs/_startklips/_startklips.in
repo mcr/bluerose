@@ -333,7 +333,7 @@ then
 	sysflag "$hidetos" "hidetos" yes tos
 elif $klips
 then
-	echo "WARNING: cannot adjust KLIPS flags, no $sysflags directory!"
+	#echo "WARNING: cannot adjust KLIPS flags, no $sysflags directory!"
 	# carry on
 fi
 
