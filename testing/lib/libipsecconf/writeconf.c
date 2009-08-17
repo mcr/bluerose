@@ -121,6 +121,11 @@ main(int argc, char *argv[])
 
     conn->policy = POLICY_ENCRYPT|POLICY_PFS|POLICY_COMPRESS;
 
+    conn->left.rsakey1 = "0sabcdabcdabcd";
+    conn->left.rsakey2 = "0s23489234ba28934243";
+    conn->left.cert = "/my/cert/file";
+    ttoaddr("192.168.2.102", 0, AF_INET, &conn->left.sourceip);
+
     confwrite(cfg, stdout);
 
     exit(0);

@@ -8,6 +8,10 @@ config setup
 
 # begin conn mytestconn
 conn mytestconn
+	leftrsakey=0sabcdabcdabcd
+	leftrsakey2=0s23489234ba28934243
+	leftcert=/my/cert/file
+	leftsourceip=192.168.2.102
 	dpddelay=60
 	connalias="anotheralias"
 	auto=ignore
