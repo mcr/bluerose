@@ -305,38 +305,6 @@ ${MODBUILDDIR}/Makefile : ${OPENSWANSRCDIR}/packaging/makefiles/module.make
 	echo "# compile-command: \"${MAKE} OPENSWANSRCDIR=${OPENSWANSRCDIR} ARCH=${ARCH} TOPDIR=${KERNELSRC} ${MODULE_FLAGS} MODULE_DEF_INCLUDE=${MODULE_DEF_INCLUDE} MODULE_DEFCONFIG=${MODULE_DEFCONFIG} -f Makefile ipsec.o\""         >> ${MODBUILDDIR}/Makefile
 	echo "# End: "       >> ${MODBUILDDIR}/Makefile
 
-module:
-	@if [ -f ${KERNELSRC}/README.openswan-2 ] ; then \
-                echo "WARNING: Kernel source ${KERNELSRC} has already been patched with openswan-2, out of tree build might fail!"; \
-        fi;
-	@if [ -f ${KERNELSRC}/README.freeswan ] ; then \
-                echo "ERROR: Kernel source ${KERNELSRC} has already been patched with freeswan, out of tree build will fail!"; \
-        fi;
-	@if [ -f ${KERNELSRC}/Rules.make ] ; then \
-                echo "Building module for a 2.4 kernel"; ${MAKE} module24 ; \
-        else echo "Building module for a 2.6 kernel"; ${MAKE} module26; \
-        fi;
-
-module24:
-	@if [ ! -f ${KERNELSRC}/Rules.make ] ; then \
-                echo "Warning: Building for a 2.4 kernel in what looks like a 2.6 tree"; \
-        fi ; \
-        ${MAKE} ${MODBUILDDIR}/Makefile
-	${MAKE} -C ${MODBUILDDIR}  OPENSWANSRCDIR=${OPENSWANSRCDIR} ARCH=${ARCH} ${MODULE_FLAGS} MODULE_DEF_INCLUDE=${MODULE_DEF_INCLUDE} TOPDIR=${KERNELSRC} -f Makefile ipsec.o
-	@echo 
-	@echo '========================================================='
-	@echo 
-	@echo 'KLIPS module built successfully. '
-	@echo ipsec.o is in ${MODBUILDDIR}
-	@echo 
-	@(cd ${MODBUILDDIR}; ls -l ipsec.o)
-	@(cd ${MODBUILDDIR}; size ipsec.o)
-	@echo 
-	@echo 'use make minstall as root to install it'
-	@echo 
-	@echo '========================================================='
-	@echo 
-
 modclean: 
 	rm -rf ${MODBUILDDIR}
 
@@ -394,11 +362,11 @@ ${MOD26BUILDDIR}/Makefile : ${OPENSWANSRCDIR}/packaging/makefiles/module26.make
 	echo "# End: "       >> ${MOD26BUILDDIR}/Makefile
 	ln -s -f ${OPENSWANSRCDIR}/linux/net/ipsec/match*.S ${MOD26BUILDDIR}
 
-module26:
+module module26:
 	@if [ -f ${KERNELSRC}/Rules.make ] ; then \                 echo "Warning: Building for a 2.6 kernel in what looks like a 2.4 tree"; \
         fi ; \
         ${MAKE}  ${MOD26BUILDDIR}/Makefile
-	${MAKE} -C ${KERNELSRC} ${KERNELBUILDMFLAGS} BUILDDIR=${MOD26BUILDDIR} SUBDIRS=${MOD26BUILDDIR} MODULE_DEF_INCLUDE=${MODULE_DEF_INCLUDE} MODULE_DEFCONFIG=${MODULE_DEFCONFIG}  MODULE_EXTRA_INCLUDE=${MODULE_EXTRA_INCLUDE} ARCH=${ARCH} modules
+	${MAKE} -C ${KERNELSRC} ${KERNELBUILDMFLAGS} BUILDDIR=${MOD26BUILDDIR} SUBDIRS=${MOD26BUILDDIR} MODULE_DEF_INCLUDE=${MODULE_DEF_INCLUDE} MODULE_DEFCONFIG=${MODULE_DEFCONFIG}  MODULE_EXTRA_INCLUDE=${MODULE_EXTRA_INCLUDE} ARCH=${ARCH} V=${V} modules
 	@echo 
 	@echo '========================================================='
 	@echo 
@@ -562,8 +530,6 @@ tarpkg:
 	@(cd /var/tmp/openswan-${USER} && tar czf - . ) >openswan${VENDOR}-${IPSECVERSION}.tgz 
 	@ls -l openswan${VENDOR}-${IPSECVERSION}.tgz
 	@rm -rf /var/tmp/openswan-${USER}
-	
-
 
 env:
 	@env | sed -e "s/'/'\\\\''/g" -e "s/\([^=]*\)=\(.*\)/\1='\2'/"
