@@ -1,5 +1,5 @@
 /*
- * sysctl interface to net IPSEC subsystem.
+ * Sysctl interface to net IPSEC subsystem.
  * Copyright (C) 1998, 1999, 2000, 2001	  Richard Guy Briggs.
  * 
  * This program is free software; you can redistribute it and/or modify it
@@ -20,11 +20,13 @@
  * Initiated April 3, 1998, Richard Guy Briggs <rgb@conscoop.ottawa.on.ca>
  */
 
+#include "openswan/ipsec_kversion.h"
+#include "openswan/ipsec_param.h"
+
 #include <linux/version.h>
 #include <linux/mm.h>
 #include <linux/sysctl.h>
-
-#include "openswan/ipsec_param.h"
+#include <net/net_namespace.h>
 
 #ifdef CONFIG_SYSCTL
 
@@ -227,40 +229,20 @@ static ctl_table ipsec_table[] = {
        {0}
 };
 
-static ctl_table ipsec_net_table[] = {
-	{ .ctl_name = NET_IPSEC,
-          .procname = "ipsec",
-          .data     = NULL,
-          .maxlen   = 0,
-          .mode     = 0555,
-          .child    = ipsec_table,
-          .proc_handler = NULL,
-        },
-	{ 0 }
-};
- 
-static ctl_table ipsec_root_table[] = {
-	{ .ctl_name = CTL_NET,
-          .procname = "net",
-          .data     = NULL,
-          .maxlen   = 0,
-          .mode     = 0555,
-          .child    = ipsec_net_table,
-          .proc_handler = NULL,
-        },
-	{ 0 }
-};
+#define NET_KLIPS 413
 
+static struct ctl_path net_ipsec_path[] = {
+	{ .procname = "net",   .ctl_name = CTL_NET, },
+	{ .procname = "ipsec", .ctl_name = NET_KLIPS, },
+};
  
 static struct ctl_table_header *ipsec_table_header;
 
 int ipsec_sysctl_register(void)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,21)
-        ipsec_table_header = register_sysctl_table(ipsec_root_table);
-#else
-        ipsec_table_header = register_sysctl_table(ipsec_root_table, 0);
-#endif
+        ipsec_table_header = register_net_sysctl_table(&init_net,
+						       net_ipsec_path, ipsec_table);
+	printk("registered KLIPS /proc/sys/net");
         if (!ipsec_table_header) {
                 return -ENOMEM;
 	}
