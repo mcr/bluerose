@@ -285,11 +285,9 @@ ipsec_klips_init(void)
 
 
 #ifdef CONFIG_SYSCTL
-#ifdef CONFIG_KLIPS_SYSCTL
         error |= ipsec_sysctl_register();
         if (error)
                 goto error_sysctl_register;
-#endif
 #endif                                                                          
 
 	ipsec_alg_init();
