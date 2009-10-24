@@ -146,11 +146,7 @@ struct sk_buff *skb_compress(struct sk_buff *skb, struct ipsec_sa *ips, unsigned
 		return NULL;
 	}
 	
-#ifdef NET_21
 	iph = ip_hdr(skb);
-#else /* NET_21 */
-	iph = skb->ip_hdr;
-#endif /* NET_21 */
 
 	switch (iph->protocol) {
 	case IPPROTO_COMP:
@@ -372,11 +368,7 @@ struct sk_buff *skb_decompress(struct sk_buff *skb, struct ipsec_sa *ips, unsign
 		return NULL;
 	}
 	
-#ifdef NET_21
 	oiph = ip_hdr(skb);
-#else /* NET_21 */
-	oiph = skb->ip_hdr;
-#endif /* NET_21 */
 	
 	iphlen = oiph->ihl << 2;
 	
@@ -491,11 +483,7 @@ struct sk_buff *skb_decompress(struct sk_buff *skb, struct ipsec_sa *ips, unsign
 	}
 #endif /* CONFIG_KLIPS_DEBUG */
 
-#ifdef NET_21
 	iph = ip_hdr(nskb);
-#else /* NET_21 */
-	iph = nskb->ip_hdr;
-#endif /* NET_21 */
 	zs.next_out = (char *)iph + iphlen;
 	zs.avail_out = pyldsz;
 
@@ -598,11 +586,7 @@ struct sk_buff *skb_copy_ipcomp(struct sk_buff *skb, int data_growth, int gfp_ma
          *      Allocate the copy buffer
          */
 	
-#ifdef NET_21
 	iph = ip_hdr(skb);
-#else /* NET_21 */
-	iph = skb->ip_hdr;
-#endif /* NET_21 */
         if (!iph) return NULL;
         iphlen = iph->ihl << 2;
 
@@ -634,14 +618,11 @@ struct sk_buff *skb_copy_ipcomp(struct sk_buff *skb, int data_growth, int gfp_ma
 	if (skb_transport_header(skb))
 		skb_set_transport_header(n, offset);
         n->protocol=skb->protocol;
-#ifdef NET_21
         n->csum = 0;
         n->priority=skb->priority;
         n->dst=dst_clone(skb->dst);
         skb_set_network_header(n, offset);
-#ifndef NETDEV_23
         n->is_clone=0;
-#endif /* NETDEV_23 */
         atomic_set(&n->users, 1);
         n->destructor = NULL;
 #ifdef HAVE_SOCK_SECURITY
@@ -651,48 +632,15 @@ struct sk_buff *skb_copy_ipcomp(struct sk_buff *skb, int data_growth, int gfp_ma
 #ifdef CONFIG_IP_FIREWALL
         n->fwmark = skb->fwmark;
 #endif
-#else /* NET_21 */
-	n->link3=NULL;
-	n->when=skb->when;
-	n->ip_hdr=(struct iphdr *)(((char *)skb->ip_hdr)+offset);
-	n->saddr=skb->saddr;
-	n->daddr=skb->daddr;
-	n->raddr=skb->raddr;
-	n->seq=skb->seq;
-	n->end_seq=skb->end_seq;
-	n->ack_seq=skb->ack_seq;
-	n->acked=skb->acked;
-	n->free=1;
-	n->arp=skb->arp;
-	n->tries=0;
-	n->lock=0;
-	n->users=0;
-	memcpy(n->proto_priv, skb->proto_priv, sizeof(skb->proto_priv));
-#endif /* NET_21 */
 	if (skb_mac_header(skb))
 		skb_set_mac_header(n, offset);
-#ifndef NETDEV_23
-	n->used=skb->used;
-#endif /* !NETDEV_23 */
         n->pkt_type=skb->pkt_type;
-#ifndef NETDEV_23
-	n->pkt_bridged=skb->pkt_bridged;
-#endif /* NETDEV_23 */
 	n->ip_summed=0;
 #ifdef HAVE_TSTAMP
 	n->tstamp = skb->tstamp;
 #else
         n->stamp=skb->stamp;
 #endif
-#ifndef NETDEV_23 /* this seems to have been removed in 2.4 */
-#if defined(CONFIG_SHAPER) || defined(CONFIG_SHAPER_MODULE)
-        n->shapelatency=skb->shapelatency;       /* Latency on frame */
-        n->shapeclock=skb->shapeclock;           /* Time it should go out */
-        n->shapelen=skb->shapelen;               /* Frame length in clocks */
-        n->shapestamp=skb->shapestamp;           /* Stamp for shaper    */
-        n->shapepend=skb->shapepend;             /* Pending */
-#endif /* defined(CONFIG_SHAPER) || defined(CONFIG_SHAPER_MODULE) */
-#endif /* NETDEV_23 */
 
         return n;
 }
