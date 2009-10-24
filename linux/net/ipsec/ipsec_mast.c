@@ -996,10 +996,14 @@ ipsec_mast_init(struct net_device *dev)
 	dev->get_stats		= ipsec_mast_get_stats;
 	dev->destructor         = free_netdev;
 
+#ifndef HAVE_NETDEV_PRIV
 	dev->priv = kmalloc(sizeof(struct ipsecpriv), GFP_KERNEL);
 	if (dev->priv == NULL)
 		return -ENOMEM;
-	memset((caddr_t)(dev->priv), 0, sizeof(struct ipsecpriv));
+#endif
+
+	ipriv = netdev_priv(dev);
+	memset((caddr_t)ipriv, 0, sizeof(struct ipsecpriv));
 
 	for(i = 0; i < sizeof(zeroes); i++) {
 		((__u8*)(zeroes))[i] = 0;
