@@ -62,6 +62,8 @@
 
 #include <linux/types.h>
  
+#include "openswan/ipsec_param2.h"
+
 #include <openswan.h>
 
 #include "openswan/radij.h"
@@ -671,7 +673,7 @@ pfkey_create(struct net *net, struct socket *sock, int protocol)
 		return -EPROTONOSUPPORT;
 	}
 
-	if((current->uid != 0)) {
+	if((current_uid() != 0)) {
 		KLIPS_PRINT(debug_pfkey,
 			    "klips_debug:pfkey_create: "
 			    "must be root to open pfkey sockets.\n");
@@ -701,7 +703,7 @@ pfkey_create(struct net *net, struct socket *sock, int protocol)
 	sk->sk_family = PF_KEY;
 /*	sk->num = protocol; */
 	sk->sk_protocol = protocol;
-	key_pid(sk) = current->pid;
+	key_pid(sk) = current_uid();
 	KLIPS_PRINT(debug_pfkey,
 		    "klips_debug:pfkey_create: "
 		    "sock->fasync_list=0p%p sk->sleep=0p%p.\n",
@@ -857,7 +859,7 @@ pfkey_sendmsg(struct socket *sock, struct msghdr *msg, int len, struct scm_cooki
 		SENDERR(-error);
 	}
 
-	if((current->uid != 0)) {
+	if((current_uid() != 0)) {
 		KLIPS_PRINT(debug_pfkey,
 			    "klips_debug:pfkey_sendmsg: "
 			    "must be root to send messages to pfkey sockets.\n");
@@ -923,11 +925,11 @@ pfkey_sendmsg(struct socket *sock, struct msghdr *msg, int len, struct scm_cooki
 	   the result of an ACQUIRE either from kernel (PID==0) or
 	   userspace (some other PID). */
 	/* check PID */
-	if(pfkey_msg->sadb_msg_pid != current->pid) {
+	if(pfkey_msg->sadb_msg_pid != current_uid()) {
 		KLIPS_PRINT(debug_pfkey,
 			    "klips_debug:pfkey_sendmsg: "
 			    "pid (%d) does not equal sending process pid (%d).\n",
-			    pfkey_msg->sadb_msg_pid, current->pid);
+			    pfkey_msg->sadb_msg_pid, current_uid());
 		SENDERR(EINVAL);
 	}
 #endif

@@ -27,7 +27,9 @@
 #define KLIPS_IP_SELECT_IDENT(iph, skb) ip_select_ident(iph, skb_dst(skb), NULL)
 #endif
 
-
+#if !defined(HAVE_CURRENT_UID)
+#define current_uid() (current->uid)
+#endif
 
 #endif /* _OPENSWAN_PARAM2_H */
 

@@ -41,6 +41,8 @@
 #include <linux/ip.h>          /* struct iphdr */
 #include <linux/skbuff.h>
 
+#include "openswan/ipsec_param2.h"
+
 #include <openswan.h>
 
 #include <crypto/klips-des.h>
@@ -1414,7 +1416,7 @@ pfkey_register_reply(int satype, struct sadb_msg *sadb_msg)
 							  satype,
 							  0,
 							  sadb_msg? sadb_msg->sadb_msg_seq : ++pfkey_msg_seq,
-							  sadb_msg? sadb_msg->sadb_msg_pid: current->pid),
+							  sadb_msg? sadb_msg->sadb_msg_pid : current_uid()),
 			      extensions_reply) &&
 	     (alg_num_a ? pfkey_safe_build(error = pfkey_supported_build(&extensions_reply[SADB_EXT_SUPPORTED_AUTH],
 									SADB_EXT_SUPPORTED_AUTH,
