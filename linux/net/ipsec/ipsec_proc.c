@@ -932,9 +932,6 @@ ipsec_proc_init()
 				item->read_proc  = it->readthing;
 				item->write_proc = it->writething;
 				item->data       = it->data;
-#ifdef MODULE
-				item->owner = THIS_MODULE;
-#endif
 			} else {
 				error |= 1;
 			}
