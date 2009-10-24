@@ -231,6 +231,7 @@ extern int sysctl_ipsec_regress_pfkey_lossage;
 
 #ifndef HAVE_SKB_DST
 #define skb_dst(skb) (skb->dst)
+#define skb_dst_set(skb,D) do { (skb)->dst=(D); } while(0)
 #endif
 
 #define _IPSEC_PARAM_H_

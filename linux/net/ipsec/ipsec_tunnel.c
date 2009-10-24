@@ -1539,7 +1539,18 @@ ipsec_tunnel_setup(struct net_device *dev)
 	}
 	
 
+#ifdef HAVE_NET_DEVICE_OPS
 	dev->netdev_ops         = &klips_device_ops;
+	
+#else
+	dev->open		= ipsec_tunnel_open;
+	dev->stop		= ipsec_tunnel_close;
+	dev->hard_start_xmit	= ipsec_tunnel_start_xmit;
+	dev->get_stats		= ipsec_tunnel_get_stats;
+	dev->set_mac_address    = NULL;
+	dev->do_ioctl           = ipsec_tunnel_ioctl;
+	dev->neigh_setup        = ipsec_tunnel_neigh_setup_dev;
+#endif
 
 /*	prv->neigh_setup        = NULL; */
 	dev->hard_header_len 	= 0;
@@ -1767,6 +1778,7 @@ ipsec_xmit_state_delete (struct ipsec_xmit_state *ixs)
         spin_unlock_bh (&ixs_cache_lock);
 }
 
+#ifdef HAVE_NET_DEVICE_OPS
 const struct net_device_ops klips_device_ops = {
 	/* Add our tunnel functions to the device */
 	.ndo_open               = ipsec_tunnel_open,
@@ -1780,6 +1792,7 @@ const struct net_device_ops klips_device_ops = {
 	.ndo_set_mac_address = ipsec_tunnel_set_mac_address,
 #endif
 };
+#endif
 
 /*
  * We call the attach routine to attach another device.
@@ -1807,7 +1820,7 @@ ipsec_tunnel_attach(struct net_device *dev, struct net_device *physdev)
 	}
 
 #ifdef HAVE_NET_DEVICE_OPS
-	dev->netdev_ops = &klips_device_ops;
+	dev->netdev_ops      = &klips_device_ops;
 
 #endif /* HAVE_NET_DEVICE_OPS */
 
