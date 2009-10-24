@@ -620,9 +620,8 @@ struct sk_buff *skb_copy_ipcomp(struct sk_buff *skb, int data_growth, int gfp_ma
         n->protocol=skb->protocol;
         n->csum = 0;
         n->priority=skb->priority;
-        n->dst=dst_clone(skb->dst);
+        skb_dst_set(n, dst_clone(skb_dst(skb)));
         skb_set_network_header(n, offset);
-        n->is_clone=0;
         atomic_set(&n->users, 1);
         n->destructor = NULL;
 #ifdef HAVE_SOCK_SECURITY
