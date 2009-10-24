@@ -4,6 +4,7 @@
  * Copyright (C) 1996, 1997  John Ioannidis.
  * Copyright (C) 1998, 1999, 2000, 2001  Richard Guy Briggs <rgb@freeswan.org>
  *                                 2001  Michael Richardson <mcr@freeswan.org>
+ *                                 2009  Michael Richardson <mcr@sandelman.ca>
  * 
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

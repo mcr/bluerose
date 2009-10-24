@@ -42,7 +42,6 @@
 #include <linux/etherdevice.h> /* eth_type_trans */
 #include <linux/ip.h>          /* struct iphdr */
 #include <net/arp.h>
-#include <linux/skbuff.h>
 
 #include <openswan.h>
 
