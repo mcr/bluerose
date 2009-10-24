@@ -93,7 +93,7 @@ int debug_tunnel = 0;
 DEBUG_NO_STATIC int
 ipsec_tunnel_open(struct net_device *dev)
 {
-	struct ipsecpriv *prv = dev->priv;
+	struct ipsecpriv *prv = netdev_priv(dev);
 	
 	/*
 	 * Can't open until attached.
@@ -139,7 +139,7 @@ int klips_header(struct sk_buff *skb, struct net_device *dev,
 		 unsigned short type,
 		 const void *daddr, const void *saddr, unsigned len)
 {
-	struct ipsecpriv *prv = dev->priv;
+	struct ipsecpriv *prv = netdev_priv(dev);
 	struct net_device *tmp;
 	int ret;
 	struct net_device_stats *stats;	/* This device's statistics */
@@ -243,7 +243,7 @@ int klips_header(struct sk_buff *skb, struct net_device *dev,
 
 int klips_header_parse(const struct sk_buff *skb, unsigned char *haddr)
 {
-	struct ipsecpriv *prv = skb->dev->priv;
+	struct ipsecpriv *prv = netdev_priv(skb->dev);
 	struct net_device_stats *stats;	/* This device's statistics */
 	int ret;
 
@@ -275,7 +275,7 @@ int klips_header_parse(const struct sk_buff *skb, unsigned char *haddr)
 DEBUG_NO_STATIC int
 klips_rebuild_header(struct sk_buff *skb)
 {
-	struct ipsecpriv *prv = skb->dev->priv;
+	struct ipsecpriv *prv = netdev_priv(skb->dev);
 	struct net_device *tmp;
 	int ret;
 	struct net_device_stats *stats;	/* This device's statistics */
@@ -325,7 +325,7 @@ klips_rebuild_header(struct sk_buff *skb)
 int klips_header_cache(const struct neighbour *neigh, struct hh_cache *hh)
 {
 	const struct net_device *dev = neigh->dev;
-	struct ipsecpriv *prv = dev->priv;
+	struct ipsecpriv *prv = netdev_priv(dev);
 	struct net_device_stats *stats;
 
 	stats = (struct net_device_stats *) &(prv->mystats);
@@ -349,7 +349,7 @@ klips_header_cache_update(struct hh_cache *hh,
 			  const struct net_device *dev,
 			  const unsigned char *  haddr)
 {
-	struct ipsecpriv *prv = dev->priv;
+	struct ipsecpriv *prv = netdev_priv(dev);
 	
 	struct net_device_stats *stats;	/* This device's statistics */
 	
@@ -1056,7 +1056,7 @@ alloc_error:
 DEBUG_NO_STATIC struct net_device_stats *
 ipsec_tunnel_get_stats(struct net_device *dev)
 {
-	return &(((struct ipsecpriv *)(dev->priv))->mystats);
+	return &(((struct ipsecpriv *)netdev_priv(dev))->mystats);
 }
 
 
@@ -1064,7 +1064,7 @@ ipsec_tunnel_get_stats(struct net_device *dev)
 DEBUG_NO_STATIC int
 ipsec_tunnel_set_mac_address(struct net_device *dev, void *addr)
 {
-	struct ipsecpriv *prv = dev->priv;
+	struct ipsecpriv *prv = netdev_priv(dev);
 	
 	struct net_device_stats *stats;	/* This device's statistics */
 	
@@ -1208,7 +1208,7 @@ DEBUG_NO_STATIC int
 ipsec_tunnel_detach(struct net_device *dev)
 {
         int i;
-	struct ipsecpriv *prv = dev->priv;
+	struct ipsecpriv *prv = netdev_priv(dev);
 
 	if(dev == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
@@ -1274,7 +1274,7 @@ ipsec_tunnel_clear(void)
 	for(i = 0; i < IPSEC_NUM_IF; i++) {
    	        ipsecdev = ipsecdevices[i];
 		if(ipsecdev != NULL) {
-			if((prv = (struct ipsecpriv *)(ipsecdev->priv))) {
+			if((prv = (struct ipsecpriv *)netdev_priv(ipsecdev))) {
 				prvdev = (struct net_device *)(prv->dev);
 				if(prvdev) {
 					KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
@@ -1299,7 +1299,7 @@ DEBUG_NO_STATIC int
 ipsec_tunnel_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 {
 	struct ipsectunnelconf *cf = (struct ipsectunnelconf *)&ifr->ifr_data;
-	struct ipsecpriv *prv = dev->priv;
+	struct ipsecpriv *prv = netdev_priv(dev);
 	struct net_device *them; /* physical device */
 #ifdef CONFIG_IP_ALIAS
 	char *colon;
@@ -1484,7 +1484,7 @@ ipsec_device_event(struct notifier_block *unused, unsigned long event, void *ptr
 			ipsec_dev = ipsecdevices[i];
 
 			if(ipsec_dev) {
-				priv = (struct ipsecpriv *)(ipsec_dev->priv);
+				priv = (struct ipsecpriv *)netdev_priv(ipsec_dev);
 				if(priv) {
 					;
 					if(((struct net_device *)(priv->dev)) == dev) {
@@ -1669,7 +1669,7 @@ ipsec_tunnel_init_devices(void)
 
 		sprintf(name, IPSEC_DEV_FORMAT, i);
 
-		dev_ipsec = alloc_netdev(0, "ipsec%d", ipsec_tunnel_setup);
+		dev_ipsec = alloc_netdev(sizeof(struct ipsecpriv), "ipsec%d", ipsec_tunnel_setup);
 		if (dev_ipsec == NULL) {
 			KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
 				    "klips_debug:ipsec_tunnel_init_devices: "
@@ -1734,8 +1734,10 @@ ipsec_tunnel_cleanup_devices(void)
 		kfree(dev_ipsec->name);
 		dev_ipsec->name=NULL;
 #endif /* !NETDEV_23 */
+#ifndef HAVE_NETDEV_PRIV
 		kfree(dev_ipsec->priv);
 		dev_ipsec->priv=NULL;
+#endif
 	}
 	return error;
 }

@@ -42,6 +42,9 @@
 #include <linux/skbuff.h>
 #include <asm/uaccess.h>
 #include <asm/checksum.h>
+
+#include "openswan/ipsec_param2.h"
+
 #include <openswan.h>
 #ifdef NET_21
 # define MSS_HACK_		/* experimental */
@@ -387,7 +390,7 @@ ipsec_xmit_sanity_check_dev(struct ipsec_xmit_state *ixs)
 		return IPSEC_XMIT_NODEV;
 	}
 
-	ixs->prv = ixs->dev->priv;
+	ixs->prv = netdev_priv(ixs->dev);
 	if (ixs->prv == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
 			    "klips_error:ipsec_xmit_sanity_check_dev: "

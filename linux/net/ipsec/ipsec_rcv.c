@@ -1547,7 +1547,7 @@ ipsec_rcv(struct sk_buff *skb
 		for(i = 0; i < IPSEC_NUM_IF; i++) {
 			sprintf(name, IPSEC_DEV_FORMAT, i);
 			if(!strcmp(name, skb->dev->name)) {
-				prv = (struct ipsecpriv *)(skb->dev->priv);
+				prv = (struct ipsecpriv *)netdev_priv(skb->dev);
 				if(prv) {
 					stats = (struct net_device_stats *) &(prv->mystats);
 				}
@@ -1563,7 +1563,7 @@ ipsec_rcv(struct sk_buff *skb
 					    "device %s does not exist\n",
 					    name);
 			}
-			prv = ipsecdev ? (struct ipsecpriv *)(ipsecdev->priv) : NULL;
+			prv = ipsecdev ? (struct ipsecpriv *)netdev_priv(ipsecdev) : NULL;
 			prvdev = prv ? (struct net_device *)(prv->dev) : NULL;
 
 #if 0

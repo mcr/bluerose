@@ -76,7 +76,7 @@ int ipsec_maxdevice_count = -1;
 DEBUG_NO_STATIC int
 ipsec_mast_open(struct net_device *dev)
 {
-	struct ipsecpriv *prv = dev->priv;
+	struct ipsecpriv *prv = netdev_priv(dev);
 	
 	/*
 	 * Can't open until attached.
@@ -243,7 +243,7 @@ ipsec_mast_start_xmit(struct sk_buff *skb, struct net_device *dev, IPsecSAref_t 
 DEBUG_NO_STATIC struct net_device_stats *
 ipsec_mast_get_stats(struct net_device *dev)
 {
-	return &(((struct ipsecpriv *)(dev->priv))->mystats);
+	return &(((struct ipsecpriv *)netdev_priv(dev))->mystats);
 }
 
 /*
@@ -255,7 +255,7 @@ DEBUG_NO_STATIC int
 ipsec_mast_hard_header(struct sk_buff *skb, struct net_device *dev,
 	unsigned short type, void *daddr, void *saddr, unsigned len)
 {
-	struct ipsecpriv *prv = dev->priv;
+	struct ipsecpriv *prv = netdev_priv(dev);
 	struct net_device *tmp;
 	int ret;
 	struct net_device_stats *stats;	/* This device's statistics */
@@ -359,7 +359,7 @@ ipsec_mast_hard_header(struct sk_buff *skb, struct net_device *dev,
 DEBUG_NO_STATIC int
 ipsec_mast_rebuild_header(struct sk_buff *skb)
 {
-	struct ipsecpriv *prv = skb->dev->priv;
+	struct ipsecpriv *prv = netdev_priv(skb->dev);
 	struct net_device *tmp;
 	int ret;
 	struct net_device_stats *stats;	/* This device's statistics */
@@ -422,7 +422,7 @@ ipsec_mast_rebuild_header(struct sk_buff *skb)
 DEBUG_NO_STATIC int
 ipsec_mast_set_mac_address(struct net_device *dev, void *addr)
 {
-	struct ipsecpriv *prv = dev->priv;
+	struct ipsecpriv *prv = netdev_priv(dev);
 	
 	struct net_device_stats *stats;	/* This device's statistics */
 	
@@ -471,7 +471,7 @@ ipsec_mast_set_mac_address(struct net_device *dev, void *addr)
 DEBUG_NO_STATIC void
 ipsec_mast_cache_update(struct hh_cache *hh, struct net_device *dev, unsigned char *  haddr)
 {
-	struct ipsecpriv *prv = dev->priv;
+	struct ipsecpriv *prv = netdev_priv(dev);
 	
 	struct net_device_stats *stats;	/* This device's statistics */
 	
@@ -553,7 +553,7 @@ DEBUG_NO_STATIC int
 ipsec_mast_attach(struct net_device *dev, struct net_device *physdev)
 {
         int i;
-	struct ipsecpriv *prv = dev->priv;
+	struct ipsecpriv *prv = netdev_priv(dev);
 
 	if(dev == NULL) {
 		KLIPS_PRINT(debug_mast & DB_MAST_REVEC,
@@ -636,7 +636,7 @@ DEBUG_NO_STATIC int
 ipsec_mast_detach(struct net_device *dev)
 {
         int i;
-	struct ipsecpriv *prv = dev->priv;
+	struct ipsecpriv *prv = netdev_priv(dev);
 
 	if(dev == NULL) {
 		KLIPS_PRINT(debug_mast & DB_MAST_REVEC,
@@ -721,7 +721,7 @@ ipsec_mast_clear(void)
 	for(i = 0; i < IPSEC_NUM_IF; i++) {
 		sprintf(name, IPSEC_DEV_FORMAT, i);
 		if((ipsecdev = ipsec_dev_get(name)) != NULL) {
-			if((prv = (struct ipsecpriv *)(ipsecdev->priv))) {
+			if((prv = (struct ipsecpriv *)netdev_priv(ipsecdev))) {
 				prvdev = (struct net_device *)(prv->dev);
 				if(prvdev) {
 					KLIPS_PRINT(debug_mast & DB_MAST_INIT,
@@ -746,7 +746,7 @@ DEBUG_NO_STATIC int
 ipsec_mast_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 {
 	struct ipsecmastconf *cf = (struct ipsecmastconf *)&ifr->ifr_data;
-	struct ipsecpriv *prv = dev->priv;
+	struct ipsecpriv *prv = netdev_priv(dev);
 	struct net_device *them; /* physical device */
 #ifdef CONFIG_IP_ALIAS
 	char *colon;
@@ -890,7 +890,7 @@ ipsec_mast_device_event(struct notifier_block *unused, unsigned long event, void
 			sprintf(name, IPSEC_DEV_FORMAT, i);
 			ipsec_dev = ipsec_dev_get(name);
 			if(ipsec_dev) {
-				priv = (struct ipsecpriv *)(ipsec_dev->priv);
+				priv = (struct ipsecpriv *)netdev_priv(ipsec_dev);
 				if(priv) {
 					;
 					if(((struct net_device *)(priv->dev)) == dev) {
@@ -981,6 +981,7 @@ int
 ipsec_mast_init(struct net_device *dev)
 {
 	int i;
+	struct ipsecpriv *ipriv;
 
 	KLIPS_PRINT(debug_mast,
 		    "klips_debug:ipsec_mast_init: "

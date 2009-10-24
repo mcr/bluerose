@@ -227,6 +227,11 @@
 #  define HAVE_NETWORK_NAMESPACE 1
 #endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,31)
+#  define HAVE_SKB_DST 1
+#endif
+
+
 #ifdef NET_21
 #  include <linux/in6.h>
 #else
