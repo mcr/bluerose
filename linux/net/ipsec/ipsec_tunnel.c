@@ -85,6 +85,11 @@
 
 static __u32 zeroes[64];
 
+/* forward references */
+DEBUG_NO_STATIC int ipsec_tunnel_attach(struct net_device *dev, struct net_device *physdev);
+DEBUG_NO_STATIC int ipsec_tunnel_detach(struct net_device *dev);
+extern const struct net_device_ops klips_device_ops;
+
 #ifdef CONFIG_KLIPS_DEBUG
 int debug_tunnel = 0;
 #endif /* CONFIG_KLIPS_DEBUG */
@@ -393,7 +398,6 @@ const struct header_ops klips_header_ops ____cacheline_aligned = {
 	.cache		= klips_header_cache,
 	.cache_update	= klips_header_cache_update,
 };
-
 
 enum ipsec_xmit_value
 ipsec_tunnel_strip_hard_header(struct ipsec_xmit_state *ixs)
@@ -1142,65 +1146,6 @@ ipsec_tunnel_neigh_setup_dev(struct net_device *dev, struct neigh_parms *p)
 }
 
 /*
- * We call the attach routine to attach another device.
- */
-
-DEBUG_NO_STATIC int
-ipsec_tunnel_attach(struct net_device *dev, struct net_device *physdev)
-{
-        int i;
-	struct ipsecpriv *prv = dev->priv;
-
-	if(dev == NULL) {
-		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
-			    "klips_debug:ipsec_tunnel_attach: "
-			    "no device...");
-		return -ENODEV;
-	}
-
-	if(prv == NULL) {
-		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
-			    "klips_debug:ipsec_tunnel_attach: "
-			    "no private space associated with dev=%s",
-			    dev->name ? dev->name : "NULL");
-		return -ENODATA;
-	}
-
-	dev->set_mac_address = ipsec_tunnel_set_mac_address;
-	prv->dev = physdev;
-	prv->hard_start_xmit = physdev->hard_start_xmit;
-	prv->get_stats       = physdev->get_stats;
-	dev->hard_header_len = physdev->hard_header_len;
-
-/*	prv->neigh_setup        = physdev->neigh_setup; */
-	dev->neigh_setup        = ipsec_tunnel_neigh_setup_dev;
-	dev->mtu = 16260; /* 0xfff0; */ /* dev->mtu; */
-	prv->mtu = physdev->mtu;
-
-#ifdef PHYSDEV_TYPE
-	dev->type = physdev->type; /* ARPHRD_TUNNEL; */
-#endif /*  PHYSDEV_TYPE */
-
-	dev->addr_len = physdev->addr_len;
-	for (i=0; i<dev->addr_len; i++) {
-		dev->dev_addr[i] = physdev->dev_addr[i];
-	}
-#ifdef CONFIG_KLIPS_DEBUG
-	if(debug_tunnel & DB_TN_INIT) {
-		printk(KERN_INFO "klips_debug:ipsec_tunnel_attach: "
-		       "physical device %s being attached has HW address: %2x",
-		       physdev->name, physdev->dev_addr[0]);
-		for (i=1; i < physdev->addr_len; i++) {
-			printk(":%02x", physdev->dev_addr[i]);
-		}
-		printk("\n");
-	}
-#endif /* CONFIG_KLIPS_DEBUG */
-
-	return 0;
-}
-
-/*
  * We call the detach routine to detach the ipsec tunnel from another device.
  */
 
@@ -1576,29 +1521,27 @@ ipsec_tunnel_setup(struct net_device *dev)
 		    "registering device %s\n",
 		    dev->name);
 
-	/* Add our tunnel functions to the device */
-	dev->open		= ipsec_tunnel_open;
-	dev->stop		= ipsec_tunnel_close;
-	dev->hard_start_xmit	= ipsec_tunnel_start_xmit;
-	dev->get_stats		= ipsec_tunnel_get_stats;
 	dev->destructor         = free_netdev;
 
-	dev->priv = kmalloc(sizeof(struct ipsecpriv), GFP_KERNEL);
-	if (dev->priv == NULL)
-		return;
-	memset((caddr_t)(dev->priv), 0, sizeof(struct ipsecpriv));
+#ifndef HAVE_NETDEV_PRIV
+	{
+		struct ipsecpriv *priv_dev;
+		priv_dev = kmalloc(sizeof(struct ipsecpriv), GFP_KERNEL);
+		if (priv_dev == NULL)
+			return;
+		dev->priv = priv_net;
+	}
+#endif
+	memset((caddr_t)netdev_priv(dev), 0, sizeof(struct ipsecpriv));
 
 	for(i = 0; i < sizeof(zeroes); i++) {
 		((__u8*)(zeroes))[i] = 0;
 	}
 	
 
-	dev->set_multicast_list = NULL;
-	dev->do_ioctl		= ipsec_tunnel_ioctl;
-	dev->set_mac_address 	= NULL;
+	dev->netdev_ops         = &klips_device_ops;
 
 /*	prv->neigh_setup        = NULL; */
-	dev->neigh_setup        = ipsec_tunnel_neigh_setup_dev;
 	dev->hard_header_len 	= 0;
 	dev->mtu		= 0;
 	dev->addr_len		= 0;
@@ -1823,6 +1766,92 @@ ipsec_xmit_state_delete (struct ipsec_xmit_state *ixs)
 
         spin_unlock_bh (&ixs_cache_lock);
 }
+
+const struct net_device_ops klips_device_ops = {
+	/* Add our tunnel functions to the device */
+	.ndo_open               = ipsec_tunnel_open,
+	.ndo_stop		= ipsec_tunnel_close,
+	.ndo_start_xmit 	= ipsec_tunnel_start_xmit,
+	.ndo_get_stats  	= ipsec_tunnel_get_stats,
+	.ndo_neigh_setup        = ipsec_tunnel_neigh_setup_dev,
+	.ndo_do_ioctl		= ipsec_tunnel_ioctl,
+
+#ifdef HAVE_SET_MAC_ADDR
+	.ndo_set_mac_address = ipsec_tunnel_set_mac_address,
+#endif
+};
+
+/*
+ * We call the attach routine to attach another device.
+ */
+
+DEBUG_NO_STATIC int
+ipsec_tunnel_attach(struct net_device *dev, struct net_device *physdev)
+{
+        int i;
+	struct ipsecpriv *prv = netdev_priv(dev);
+
+	if(dev == NULL) {
+		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
+			    "klips_debug:ipsec_tunnel_attach: "
+			    "no device...");
+		return -ENODEV;
+	}
+
+	if(prv == NULL) {
+		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
+			    "klips_debug:ipsec_tunnel_attach: "
+			    "no private space associated with dev=%s",
+			    dev->name ? dev->name : "NULL");
+		return -ENODATA;
+	}
+
+#ifdef HAVE_NET_DEVICE_OPS
+	dev->netdev_ops = &klips_device_ops;
+
+#endif /* HAVE_NET_DEVICE_OPS */
+
+#ifndef HAVE_SET_MAC_ADDR
+	dev->set_mac_address = ipsec_tunnel_set_mac_address;
+#endif
+	prv->dev = physdev;
+
+#ifdef HAVE_NET_DEVICE_OPS
+	prv->hard_start_xmit = physdev->netdev_ops->ndo_start_xmit;
+	prv->get_stats       = physdev->netdev_ops->ndo_get_stats;
+#else
+	prv->hard_start_xmit = physdev->hard_start_xmit;
+	prv->get_stats       = physdev->get_stats;
+#endif
+	dev->hard_header_len = physdev->hard_header_len;
+
+/*	prv->neigh_setup        = physdev->neigh_setup; */
+	dev->mtu = 16260; /* 0xfff0; */ /* dev->mtu; */
+	prv->mtu = physdev->mtu;
+
+#ifdef PHYSDEV_TYPE
+	dev->type = physdev->type; /* ARPHRD_TUNNEL; */
+#endif /*  PHYSDEV_TYPE */
+
+	dev->addr_len = physdev->addr_len;
+	for (i=0; i<dev->addr_len; i++) {
+		dev->dev_addr[i] = physdev->dev_addr[i];
+	}
+#ifdef CONFIG_KLIPS_DEBUG
+	if(debug_tunnel & DB_TN_INIT) {
+		printk(KERN_INFO "klips_debug:ipsec_tunnel_attach: "
+		       "physical device %s being attached has HW address: %2x",
+		       physdev->name, physdev->dev_addr[0]);
+		for (i=1; i < physdev->addr_len; i++) {
+			printk(":%02x", physdev->dev_addr[i]);
+		}
+		printk("\n");
+	}
+#endif /* CONFIG_KLIPS_DEBUG */
+
+	return 0;
+}
+
 
 /*
  *
