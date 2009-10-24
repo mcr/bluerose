@@ -88,7 +88,6 @@ struct ipsec_xmit_state
 	int hard_header_stripped;	/* has the hard header been removed yet? */
 	int hard_header_len;
 	struct net_device *physdev;
-/*	struct device *virtdev; */
 	short physmtu;
 	short cur_mtu;          /* copy of prv->mtu, cause prv may == NULL */
 	short mtudiff;
