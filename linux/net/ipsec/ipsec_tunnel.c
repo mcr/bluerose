@@ -868,8 +868,9 @@ ipsec_tunnel_send(struct ipsec_xmit_state*ixs)
 			    ixs->dev->name);
 		return IPSEC_XMIT_RECURSDETECT;
 	}
-	dst_release(ixs->skb->dst);
-	ixs->skb->dst = &ixs->route->u.dst;
+
+	dst_release(skb_dst(ixs->skb));
+	skb_dst_set(ixs->skb, &ixs->route->u.dst);
 
 	ixs->stats->tx_bytes += ixs->skb->len;
 	if(ixs->skb->len < skb_network_header(ixs->skb) - ixs->skb->data) {

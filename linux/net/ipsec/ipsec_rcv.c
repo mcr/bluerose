@@ -1134,9 +1134,9 @@ int ipsec_rcv_decap(struct ipsec_rcv_state *irs)
 	if(irs->stats) {
 		irs->stats->rx_bytes += skb->len;
 	}
-	if(skb->dst) {
-		dst_release(skb->dst);
-		skb->dst = NULL;
+	if(skb_dst(skb)) {
+		dst_release(skb_dst(skb));
+		skb_dst_set(skb, NULL);
 	}
 	skb->pkt_type = PACKET_HOST;
 	if(irs->hard_header_len &&
