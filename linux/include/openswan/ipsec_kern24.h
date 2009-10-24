@@ -30,18 +30,7 @@
 #  define uint64_t __u64 
 #endif
 
-#ifdef NET_21
 # define ipsec_kfree_skb(a) kfree_skb(a)
-#else /* NET_21 */
-# define ipsec_kfree_skb(a) kfree_skb(a, FREE_WRITE)
-#endif /* NET_21 */
-
-#ifdef NETDEV_23
-#if 0
-#ifndef NETDEV_25
-#define device net_device
-#endif
-#endif
 
 #if defined(HAVE_NETWORK_NAMESPACE)
 # define ipsec_dev_get(x)   dev_get_by_name(&init_net, x)
@@ -53,12 +42,6 @@
 # define ipsec_dev_put(x) dev_put(x)
 # define __ipsec_dev_put(x) __dev_put(x)
 # define ipsec_dev_hold(x) dev_hold(x)
-#else /* NETDEV_23 */
-# define ipsec_dev_get dev_get
-# define __ipsec_dev_put(x) 
-# define ipsec_dev_put(x)
-# define ipsec_dev_hold(x) 
-#endif /* NETDEV_23 */
 
 #ifndef SPINLOCK
 #  include <linux/bios32.h>
